@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:livestockmanagement/widgets/bottom_nav.dart';
+import 'package:livestockmanagement/screens/home_page.dart';
 
 void main() {
   runApp(const FarmApp());
@@ -12,13 +14,13 @@ class FarmApp extends StatelessWidget {
     return MaterialApp(
       title: 'Ứng dụng quản lý chăn nuôi',
       theme: ThemeData(
-          primarySwatch: Colors.green,
-          fontFamily: 'Roboto',
-          scaffoldBackgroundColor: Colors.grey[50],
-          appBarTheme: const AppBarTheme(
-            iconTheme: IconThemeData(color: Colors.white),
-            titleTextStyle: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-          )
+        primarySwatch: Colors.green,
+        fontFamily: 'Roboto',
+        scaffoldBackgroundColor: Colors.grey[50],
+        appBarTheme: const AppBarTheme(
+          iconTheme: IconThemeData(color: Colors.white),
+          titleTextStyle: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+        )
       ),
       home: const HomeScreen(),
       debugShowCheckedModeBanner: false,
@@ -26,186 +28,28 @@ class FarmApp extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final constrainedWidth = screenWidth > 500 ? 500.0 : screenWidth;
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
+class _HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0;
+
+  // Danh sách các trang
+  final List<Widget> _pages = [
+    const HomePage(),
+    Container(color: Colors.white, child: const Center(child: Text('Vật nuôi'))),
+    Container(color: Colors.white, child: const Center(child: Text('Thống kê'))),
+    Container(color: Colors.white, child: const Center(child: Text('Cài đặt'))),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: constrainedWidth),
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      color: Colors.green[600],
-                      padding: const EdgeInsets.only(top: 16.0, bottom: 80.0, left: 16.0, right: 16.0), // pb-20 roughly means more bottom padding
-                      child: Column(
-                        children: [
-                          SafeArea(
-                            bottom: false,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(Icons.pets, color: Colors.yellow[400], size: 30),
-                                    const SizedBox(width: 8),
-                                    const Text(
-                                      'FarmManager',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Stack(
-                                      alignment: Alignment.topRight,
-                                      children: [
-                                        const Icon(Icons.notifications_outlined, color: Colors.white, size: 28),
-                                        Container(
-                                          padding: const EdgeInsets.all(2),
-                                          decoration: BoxDecoration(
-                                            color: Colors.red[500],
-                                            shape: BoxShape.circle,
-                                          ),
-                                          constraints: const BoxConstraints(
-                                            minWidth: 16,
-                                            minHeight: 16,
-                                          ),
-                                          child: const Text(
-                                            '3',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 10,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(width: 16),
-                                    const Icon(Icons.menu, color: Colors.white, size: 28),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Positioned(
-                      top: 100,
-                      left: 16,
-                      right: 16,
-                      child: Container(
-                        padding: const EdgeInsets.all(16.0),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              spreadRadius: 1,
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                                radius: 32,
-                                backgroundColor: Colors.green[500],
-                                backgroundImage: const NetworkImage(
-                                    'https://lh3.googleusercontent.com/a/ACg8ocK_2P5yqJ7qCqP-jG0XyX9-g_Q8-X8jY5V5XwN4bQ=s96-c'), // Placeholder
-                                child: const Icon(Icons.person, size: 32, color: Colors.white70) // Fallback icon
-                            ),
-                            const SizedBox(width: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Xin chào, An Nguyễn!',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey[800],
-                                  ),
-                                ),
-                                Text(
-                                  'Trang trại ABC',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.only(top: 88.0, left: 16.0, right: 16.0, bottom: 24.0), // pt-24 (from header bottom) + extra spacing
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate(
-                    [
-                      Text(
-                        'Chức năng chính',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[700],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      GridView.count(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: const [
-                          FeatureCard(icon: Icons.savings_outlined, label: 'Quản lý Vật nuôi', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                          FeatureCard(icon: Icons.home_work_outlined, label: 'Quản lý Chuồng trại', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                          FeatureCard(icon: Icons.grass_outlined, label: 'Quản lý Thức ăn', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                          FeatureCard(icon: Icons.vaccines_outlined, label: 'Lịch tiêm chủng', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                          FeatureCard(icon: Icons.inventory_2_outlined, label: 'Quản lý Kho', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                          FeatureCard(icon: Icons.trending_up_outlined, label: 'Theo dõi Tăng trưởng', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                          FeatureCard(icon: Icons.calendar_month_outlined, label: 'Lịch làm việc', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                          FeatureCard(icon: Icons.health_and_safety_outlined, label: 'Sức khỏe & Bệnh tật', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                          FeatureCard(icon: Icons.receipt_long_outlined, label: 'Ghi chép', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      _buildFarmOverviewCard(),
-                      const SizedBox(height: 24),
-                      _buildTodayTasksCard(),
-                      const SizedBox(height: 80), // Space for bottom nav bar
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      body: _pages[_currentIndex],
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         backgroundColor: Colors.green[600],
@@ -214,306 +58,14 @@ class HomeScreen extends StatelessWidget {
         shape: const CircleBorder(side: BorderSide(color: Colors.white, width: 4)),
         child: const Icon(Icons.add, size: 32),
       ),
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.white,
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
-        elevation: 8.0,
-        shadowColor: Colors.black.withOpacity(0.1),
-        surfaceTintColor: Colors.white,
-        child: Container(
-          decoration: BoxDecoration(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16.0),
-                topRight: Radius.circular(16.0),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  offset: const Offset(0, -4),
-                  blurRadius: 6,
-                  spreadRadius: -1,
-                ),
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  offset: const Offset(0, -2),
-                  blurRadius: 4,
-                  spreadRadius: -2,
-                )
-              ]
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: <Widget>[
-                _buildBottomNavItem(Icons.home_outlined, 'Trang chủ', true, context),
-                _buildBottomNavItem(Icons.pets_outlined, 'Vật nuôi', false, context),
-                const SizedBox(width: 40),
-                _buildBottomNavItem(Icons.bar_chart_outlined, 'Thống kê', false, context),
-                _buildBottomNavItem(Icons.settings_outlined, 'Cài đặt', false, context),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFarmOverviewCard() {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.07),
-            spreadRadius: 0,
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Tổng quan trang trại',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[700],
-                ),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  'Xem chi tiết',
-                  style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.green[600],
-                      fontWeight: FontWeight.w500),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Colors.green[50],
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Tổng số vật nuôi',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                      ),
-                      Text(
-                        '1,250',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Colors.yellow[50],
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Cần chú ý',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                      ),
-                      Text(
-                        '15',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.yellow[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTodayTasksCard() {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.07),
-            spreadRadius: 0,
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Công việc hôm nay',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[700],
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildTaskItem(Icons.local_drink, Colors.orange[500]!, 'Cho heo ăn (Lô A1)', '07:00 AM'),
-          const SizedBox(height: 8),
-          _buildTaskItem(Icons.cleaning_services, Colors.blue[500]!, 'Dọn dẹp chuồng gà', '09:00 AM'),
-          const SizedBox(height: 8),
-          _buildTaskItem(Icons.vaccines, Colors.purple[500]!, 'Tiêm phòng bò (Lô B2)', '02:00 PM'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaskItem(IconData icon, Color iconColor, String title, String time) {
-    return Container(
-      padding: const EdgeInsets.all(10.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: iconColor, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-              ),
-            ],
-          ),
-          Text(
-            time,
-            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNavItem(IconData icon, String label, bool isActive, BuildContext context) {
-    final color = isActive ? Colors.green[600] : Colors.grey[600];
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Icon(icon, color: color, size: 24),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: color,
-                  fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class FeatureCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color iconColor;
-  final Color bgColor;
-
-  const FeatureCard({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.iconColor,
-    required this.bgColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {},
-      hoverColor: Colors.grey[100],
-      borderRadius: BorderRadius.circular(8.0),
-      child: Container(
-        padding: const EdgeInsets.all(10.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              spreadRadius: 1,
-              blurRadius: 5,
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                color: bgColor, // bg-green-100
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: iconColor, size: 30), // text-green-600
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.grey[700],
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomNav(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
       ),
     );
   }
