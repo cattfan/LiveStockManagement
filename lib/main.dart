@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:livestockmanagement/Screens/statistics_page.dart';
 import 'package:livestockmanagement/widgets/bottom_nav.dart';
-import 'package:livestockmanagement/screens/home_page.dart';
+import 'package:livestockmanagement/Screens/home_page.dart';
 
 void main() {
   runApp(const FarmApp());
@@ -42,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _pages = [
     const HomePage(),
     Container(color: Colors.white, child: const Center(child: Text('Vật nuôi'))),
-    Container(color: Colors.white, child: const Center(child: Text('Thống kê'))),
+    const StatisticsPage(),
     Container(color: Colors.white, child: const Center(child: Text('Cài đặt'))),
   ];
 

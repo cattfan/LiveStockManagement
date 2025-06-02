@@ -7,6 +7,7 @@ class FeatureCard extends StatelessWidget {
   final String label;
   final Color iconColor;
   final Color bgColor;
+  final VoidCallback? onTap; // Thêm onTap
 
   const FeatureCard({
     super.key,
@@ -14,12 +15,13 @@ class FeatureCard extends StatelessWidget {
     required this.label,
     required this.iconColor,
     required this.bgColor,
+    this.onTap, // Thêm onTap
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap, // Sử dụng onTap
       hoverColor: Colors.grey[100],
       borderRadius: BorderRadius.circular(8.0),
       child: Container(

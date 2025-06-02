@@ -2,6 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:livestockmanagement/widgets/feature_card.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/vaccination_page.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/storage_management_page.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/feed_management_page.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/barn_management_page.dart';
+
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -156,16 +161,73 @@ class HomePage extends StatelessWidget {
                       mainAxisSpacing: 12,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      children: const [
-                        FeatureCard(icon: Icons.savings_outlined, label: 'Quản lý Vật nuôi', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                        FeatureCard(icon: Icons.home_work_outlined, label: 'Quản lý Chuồng trại', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                        FeatureCard(icon: Icons.grass_outlined, label: 'Quản lý Thức ăn', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                        FeatureCard(icon: Icons.vaccines_outlined, label: 'Lịch tiêm chủng', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                        FeatureCard(icon: Icons.inventory_2_outlined, label: 'Quản lý Kho', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                        FeatureCard(icon: Icons.trending_up_outlined, label: 'Theo dõi Tăng trưởng', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                        FeatureCard(icon: Icons.calendar_month_outlined, label: 'Lịch làm việc', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                        FeatureCard(icon: Icons.health_and_safety_outlined, label: 'Sức khỏe & Bệnh tật', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
-                        FeatureCard(icon: Icons.receipt_long_outlined, label: 'Ghi chép', iconColor: Color(0xFF34D399), bgColor: Color(0xFFD1FAE5)),
+                      children: [
+                        const FeatureCard(icon: Icons.savings_outlined,
+                          label: 'Quản lý Vật nuôi',
+                          iconColor: Color(0xFF34D399),
+                          bgColor: Color(0xFFD1FAE5)
+                        ),
+
+                        FeatureCard(icon: Icons.home_work_outlined,
+                          label: 'Quản lý Chuồng trại',
+                          iconColor: const Color(0xFF34D399),
+                          bgColor: const Color(0xFFD1FAE5),
+                          onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => 
+                                const BarnManagementPage())
+                              );
+                          },
+                        ),
+                        FeatureCard(icon: Icons.grass_outlined,
+                          label: 'Quản lý Thức ăn',
+                          iconColor: const Color(0xFF34D399),
+                          bgColor: const Color(0xFFD1FAE5),
+                          onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => 
+                                const FeedManagementPage())
+                              );
+                          },
+                        ),
+                        FeatureCard(icon: Icons.vaccines_outlined,
+                          label: 'Lịch tiêm chủng',
+                          iconColor: const Color(0xFF34D399),
+                          bgColor: const Color(0xFFD1FAE5),
+                          onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => 
+                                const VaccinationPage())
+                              );
+                          },
+                        ),
+                        FeatureCard(icon: Icons.inventory_2_outlined,
+                          label: 'Quản lý Kho',
+                          iconColor: const Color(0xFF34D399),
+                          bgColor: const Color(0xFFD1FAE5),
+                          onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                               const StorageManagementPage())
+                            );
+                          },
+                        ),
+                        const FeatureCard(icon: Icons.trending_up_outlined,
+                          label: 'Theo dõi Tăng trưởng',
+                          iconColor: Color(0xFF34D399),
+                          bgColor: Color(0xFFD1FAE5)
+                        ),
+                        const FeatureCard(icon: Icons.calendar_month_outlined,
+                          label: 'Lịch làm việc',
+                          iconColor: Color(0xFF34D399),
+                          bgColor: Color(0xFFD1FAE5)
+                        ),
+                        const FeatureCard(icon: Icons.health_and_safety_outlined,
+                          label: 'Sức khỏe & Bệnh tật',
+                          iconColor: Color(0xFF34D399),
+                          bgColor: Color(0xFFD1FAE5)
+                        ),
+                        const FeatureCard(icon: Icons.receipt_long_outlined,
+                          label: 'Ghi chép',
+                          iconColor: Color(0xFF34D399),
+                          bgColor: Color(0xFFD1FAE5)
+                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -351,3 +413,4 @@ class HomePage extends StatelessWidget {
     );
   }
 }
+
