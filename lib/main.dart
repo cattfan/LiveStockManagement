@@ -3,6 +3,7 @@ import 'package:livestockmanagement/Screens/statistics_page.dart';
 import 'package:livestockmanagement/widgets/bottom_nav.dart';
 import 'package:livestockmanagement/Screens/home_page.dart';
 import 'package:livestockmanagement/Screens/livestock_page.dart';
+import 'package:livestockmanagement/Screens/setting_page.dart';
 
 void main() {
   runApp(const FarmApp());
@@ -45,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const HomePage(),
     LivestockGridScreen(),
     const StatisticsPage(),
-    Container(color: Colors.white, child: const Center(child: Text('Cài đặt'))),
+    SettingsScreen(),
   ];
 
   @override
