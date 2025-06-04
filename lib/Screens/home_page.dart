@@ -166,7 +166,8 @@ class HomePage extends StatelessWidget {
                           label: 'Quản lý Vật nuôi',
                           iconColor: Color(0xFF34D399),
                           bgColor: Color(0xFFD1FAE5)
-                        ),
+
+                              ),
 
                         FeatureCard(icon: Icons.home_work_outlined,
                           label: 'Quản lý Chuồng trại',
