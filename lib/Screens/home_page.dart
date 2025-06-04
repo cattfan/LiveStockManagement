@@ -5,7 +5,7 @@ import 'package:livestockmanagement/widgets/feature_card.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/vaccination_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/storage_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/feed_management_page.dart';
-import 'package:livestockmanagement/Screens/home_child_screens/barn_management_page.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/Barn_Page/barn_management_page.dart';
 
 
 class HomePage extends StatelessWidget {
@@ -208,21 +208,6 @@ class HomePage extends StatelessWidget {
                                const StorageManagementPage())
                             );
                           },
-                        ),
-                        const FeatureCard(icon: Icons.trending_up_outlined,
-                          label: 'Theo dõi Tăng trưởng',
-                          iconColor: Color(0xFF34D399),
-                          bgColor: Color(0xFFD1FAE5)
-                        ),
-                        const FeatureCard(icon: Icons.calendar_month_outlined,
-                          label: 'Lịch làm việc',
-                          iconColor: Color(0xFF34D399),
-                          bgColor: Color(0xFFD1FAE5)
-                        ),
-                        const FeatureCard(icon: Icons.health_and_safety_outlined,
-                          label: 'Sức khỏe & Bệnh tật',
-                          iconColor: Color(0xFF34D399),
-                          bgColor: Color(0xFFD1FAE5)
                         ),
                         const FeatureCard(icon: Icons.receipt_long_outlined,
                           label: 'Ghi chép',
