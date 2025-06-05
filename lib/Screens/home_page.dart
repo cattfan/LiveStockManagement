@@ -40,7 +40,7 @@ class HomePage extends StatelessWidget {
                                   Icon(Icons.pets, color: Colors.yellow[400], size: 30),
                                   const SizedBox(width: 8),
                                   const Text(
-                                    'FarmManager',
+                                    'Quản lý chăn nuôi',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 20,
@@ -110,7 +110,8 @@ class HomePage extends StatelessWidget {
                               radius: 32,
                               backgroundColor: Colors.green[500],
                               backgroundImage: const NetworkImage(
-                                  'https://lh3.googleusercontent.com/a/ACg8ocK_2P5yqJ7qCqP-jG0XyX9-g_Q8-X8jY5V5XwN4bQ=s96-c'),
+                                  'https://lh3.googleusercontent.com/a/ACg8ocK_'
+                                      '2P5yqJ7qCqP-jG0XyX9-g_Q8-X8jY5V5XwN4bQ=s96-c'),
                               child: const Icon(Icons.person, size: 32, color: Colors.white70)
                           ),
                           const SizedBox(width: 16),
@@ -142,7 +143,7 @@ class HomePage extends StatelessWidget {
               ),
             ),
             SliverPadding(
-              padding: const EdgeInsets.only(top: 88.0, left: 16.0, right: 16.0, bottom: 24.0),
+              padding: const EdgeInsets.only(top: 22.0, left: 16.0, right: 16.0, bottom: 16.0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate(
                   [
@@ -154,7 +155,7 @@ class HomePage extends StatelessWidget {
                         color: Colors.grey[700],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     GridView.count(
                       crossAxisCount: 3,
                       crossAxisSpacing: 12,
