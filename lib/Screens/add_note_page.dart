@@ -1,25 +1,5 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Notes App',
-      theme: ThemeData(
-        fontFamily: 'Manrope',
-        scaffoldBackgroundColor: const Color(0xFFf8fcf8),
-      ),
-      home: const NotesPage(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
+import 'package:firebase_database/firebase_database.dart';
 
 class NotesPage extends StatefulWidget {
   const NotesPage({super.key});
@@ -34,11 +14,11 @@ class _NotesPageState extends State<NotesPage> {
   final TextEditingController _reminderController = TextEditingController();
   DateTime? _selectedDateTime;
 
+  final DatabaseReference _notesRef = FirebaseDatabase.instance.ref('notes');
 
   static const Color primaryTextColor = Color(0xFF0e1b0e);
   static const Color secondaryTextColor = Color(0xFF4e974e);
   static const Color inputBgColor = Color(0xFFe7f3e7);
-  static const Color buttonBgColor = Color(0xFF19e519);
   static const Color pageBgColor = Color(0xFFf8fcf8);
 
   Future<void> _selectDateTime(BuildContext context) async {
@@ -50,9 +30,7 @@ class _NotesPageState extends State<NotesPage> {
     );
 
     if (pickedDate != null) {
-      // ignore: use_build_context_synchronously
       final TimeOfDay? pickedTime = await showTimePicker(
-        // ignore: use_build_context_synchronously
         context: context,
         initialTime: TimeOfDay.fromDateTime(_selectedDateTime ?? DateTime.now()),
       );
@@ -66,13 +44,34 @@ class _NotesPageState extends State<NotesPage> {
             pickedTime.hour,
             pickedTime.minute,
           );
-          // _reminderController.text = DateFormat('dd/MM/yyyy HH:mm').format(_selectedDateTime!); // Ví dụ định dạng
-          _reminderController.text = _selectedDateTime.toString(); // Hoặc một định dạng khác bạn muốn
+          _reminderController.text = _selectedDateTime.toString();
         });
       }
     }
   }
 
+  void _saveNote() {
+    final String title = _titleController.text;
+    final String notes = _notesController.text;
+    final String? reminder = _selectedDateTime?.toIso8601String();
+
+    if (title.isNotEmpty || notes.isNotEmpty) {
+      _notesRef.push().set({
+        'title': title,
+        'content': notes,
+        'reminderDate': reminder,
+      }).then((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã lưu ghi chú thành công!')),
+        );
+        Navigator.pop(context);
+      }).catchError((error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lưu thất bại: $error')),
+        );
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -85,6 +84,7 @@ class _NotesPageState extends State<NotesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: pageBgColor,
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -93,7 +93,6 @@ class _NotesPageState extends State<NotesPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
                   Container(
                     color: pageBgColor,
                     padding: const EdgeInsets.only(top:4.0, right: 4.0, left: 4.0, bottom: 2.0),
@@ -104,7 +103,6 @@ class _NotesPageState extends State<NotesPage> {
                           IconButton(
                             icon: const Icon(Icons.arrow_back, color: primaryTextColor, size: 24),
                             onPressed: () {
-
                               if (Navigator.canPop(context)) {
                                 Navigator.pop(context);
                               }
@@ -113,32 +111,30 @@ class _NotesPageState extends State<NotesPage> {
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                           ),
-                          Expanded(
+                          const Expanded(
                             child: Text(
                               'Thêm ghi chú',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: primaryTextColor,
-                                fontSize: 18, // text-lg
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                letterSpacing: -0.015 * 18, // tracking-[-0.015em]
+                                letterSpacing: -0.015 * 18,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 48), // Để cân bằng với IconButton
+                          const SizedBox(width: 48),
                         ],
                       ),
                     ),
                   ),
-
-                  // Title Input
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // px-4 py-3
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                     child: TextField(
                       controller: _titleController,
                       style: const TextStyle(
                         color: primaryTextColor,
-                        fontSize: 16, // text-base
+                        fontSize: 16,
                         fontWeight: FontWeight.normal,
                       ),
                       decoration: InputDecoration(
@@ -151,25 +147,23 @@ class _NotesPageState extends State<NotesPage> {
                         filled: true,
                         fillColor: inputBgColor,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.0), // rounded-xl
-                          borderSide: BorderSide.none, // border-none
+                          borderRadius: BorderRadius.circular(12.0),
+                          borderSide: BorderSide.none,
                         ),
-                        contentPadding: const EdgeInsets.all(16.0), // p-4
-                        isDense: true, // Giúp kiểm soát chiều cao tốt hơn
+                        contentPadding: const EdgeInsets.all(16.0),
+                        isDense: true,
                       ),
                       minLines: 1,
-                      maxLines: 1, // for input
+                      maxLines: 1,
                     ),
                   ),
-
-                  // Notes Textarea
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // px-4 py-3
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                     child: TextField(
                       controller: _notesController,
                       style: const TextStyle(
                         color: primaryTextColor,
-                        fontSize: 16, // text-base
+                        fontSize: 16,
                         fontWeight: FontWeight.normal,
                       ),
                       decoration: InputDecoration(
@@ -182,44 +176,40 @@ class _NotesPageState extends State<NotesPage> {
                         filled: true,
                         fillColor: inputBgColor,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.0), // rounded-xl
-                          borderSide: BorderSide.none, // border-none
+                          borderRadius: BorderRadius.circular(12.0),
+                          borderSide: BorderSide.none,
                         ),
-                        contentPadding: const EdgeInsets.all(16.0), // p-4
+                        contentPadding: const EdgeInsets.all(16.0),
                       ),
                       keyboardType: TextInputType.multiline,
-                      minLines: 5, // Tương đương min-h-36 (tùy vào font size và line height)
-                      maxLines: null, // Cho phép mở rộng không giới hạn
+                      minLines: 5,
+                      maxLines: null,
                       textAlignVertical: TextAlignVertical.top,
                     ),
                   ),
-
-                  // Reminder Title
                   Padding(
-                    padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 8.0), // px-4 pb-2 pt-4
+                    padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 8.0),
                     child: Text(
                       'Nhắc nhở',
                       style: TextStyle(
                         color: primaryTextColor,
-                        fontSize: 18, // text-lg
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: -0.015 * 18, // tracking-[-0.015em]
+                        letterSpacing: -0.015 * 18,
                       ),
                     ),
                   ),
-
-                  // Reminder Input with Icon
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // px-4 py-3
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                     child: GestureDetector(
                       onTap: () => _selectDateTime(context),
-                      child: AbsorbPointer( // Để TextField không nhận focus trực tiếp
+                      child: AbsorbPointer(
                         child: TextField(
                           controller: _reminderController,
-                          readOnly: true, // Để người dùng không nhập tay
+                          readOnly: true,
                           style: const TextStyle(
                             color: primaryTextColor,
-                            fontSize: 16, // text-base
+                            fontSize: 16,
                             fontWeight: FontWeight.normal,
                           ),
                           decoration: InputDecoration(
@@ -232,24 +222,23 @@ class _NotesPageState extends State<NotesPage> {
                               filled: true,
                               fillColor: inputBgColor,
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.0), // rounded-xl
-                                borderSide: BorderSide.none, // border-none
+                                borderRadius: BorderRadius.circular(12.0),
+                                borderSide: BorderSide.none,
                               ),
-                              contentPadding: const EdgeInsets.fromLTRB(16, 16, 12, 16), // p-4, pr-2
+                              contentPadding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
                               isDense: true,
                               suffixIcon: Container(
-                                // Styling cho phần icon giống HTML
                                 decoration: const BoxDecoration(
-                                  color: inputBgColor, // bg-[#e7f3e7]
+                                  color: inputBgColor,
                                   borderRadius: BorderRadius.only(
-                                    topRight: Radius.circular(12.0), // rounded-r-xl
+                                    topRight: Radius.circular(12.0),
                                     bottomRight: Radius.circular(12.0),
                                   ),
                                 ),
-                                padding: const EdgeInsets.only(right: 16.0), // pr-4
+                                padding: const EdgeInsets.only(right: 16.0),
                                 child: const Icon(
-                                  Icons.calendar_today, // data-icon="Calendar"
-                                  color: secondaryTextColor, // text-[#4e974e]
+                                  Icons.calendar_today,
+                                  color: secondaryTextColor,
                                   size: 24,
                                 ),
                               )
@@ -262,48 +251,36 @@ class _NotesPageState extends State<NotesPage> {
               ),
             ),
           ),
-          // Bottom Save Button and Spacer
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // px-4 py-3
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: secondaryTextColor, // bg-[#19e519]
-                    minimumSize: const Size(double.infinity, 40), // flex-1, h-10
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0), // px-4
+                    backgroundColor: secondaryTextColor,
+                    minimumSize: const Size(double.infinity, 40),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0), // rounded-full (h-10 / 2)
+                      borderRadius: BorderRadius.circular(20.0),
                     ),
                     elevation: 0,
                   ),
-                  onPressed: () {
-                    // Xử lý sự kiện lưu
-                    final title = _titleController.text;
-                    final notes = _notesController.text;
-                    final reminder = _reminderController.text;
-                    // ignore: avoid_print
-                    print('Title: $title');
-                    // ignore: avoid_print
-                    print('Notes: $notes');
-                    // ignore: avoid_print
-                    print('Reminder: $reminder, Selected DateTime: $_selectedDateTime');
-                  },
+                  onPressed: _saveNote,
                   child: const Text(
                     'Lưu',
                     style: TextStyle(
-                      color: primaryTextColor, // text-[#0e1b0e]
-                      fontSize: 14, // text-sm
+                      color: primaryTextColor,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.015 * 14, // tracking-[0.015em]
+                      letterSpacing: 0.015 * 14,
                     ),
                   ),
                 ),
               ),
               Container(
-                height: 20, // h-5
-                color: pageBgColor, // bg-[#f8fcf8]
+                height: 20,
+                color: pageBgColor,
               ),
             ],
           )

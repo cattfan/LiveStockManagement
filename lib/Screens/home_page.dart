@@ -88,8 +88,6 @@ class _HomePageState extends State<HomePage> {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.pets, color: Colors.yellow[400], size: 30),
-                                  const SizedBox(width: 8),
                                   const Text(
                                     'Quản lý chăn nuôi',
                                     style: TextStyle(
@@ -203,7 +201,6 @@ class _HomePageState extends State<HomePage> {
                         color: Colors.grey[700],
                       ),
                     ),
-                    const SizedBox(height: 8),
                     GridView.count(
                       crossAxisCount: 3,
                       crossAxisSpacing: 12,
@@ -263,7 +260,7 @@ class _HomePageState extends State<HomePage> {
                           },
                         ),
                         const FeatureCard(icon: Icons.receipt_long_outlined,
-                            label: 'Ghi chép',
+                            label: 'Ghi chú',
                             iconColor: Color(0xFF34D399),
                             bgColor: Color(0xFFD1FAE5)
                         ),

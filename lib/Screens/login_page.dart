@@ -48,7 +48,7 @@ class LivestockLoginPage extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            'Livestock Management',
+                            'QUẢN LÝ CHĂN NUÔI',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: secondaryTextColor,
@@ -82,7 +82,7 @@ class LivestockLoginPage extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 20.0, bottom: 12.0, left: 16.0, right: 16.0),
                     child: Text(
-                      'Welcome!',
+                      'Chào mừng!',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: secondaryTextColor,
@@ -99,7 +99,7 @@ class LivestockLoginPage extends StatelessWidget {
                       constraints: const BoxConstraints(maxWidth: 480),
                       child: TextField(
                         decoration: InputDecoration(
-                          hintText: 'Email',
+                          hintText: 'Tài khoản',
                           hintStyle: const TextStyle(color: secondaryTextColor, fontSize: 16.0),
                           filled: true,
                           fillColor: inputBgColor,
@@ -127,7 +127,7 @@ class LivestockLoginPage extends StatelessWidget {
                       child: TextField(
                         obscureText: true,
                         decoration: InputDecoration(
-                          hintText: 'Password',
+                          hintText: 'Mật khẩu',
                           hintStyle: const TextStyle(color: secondaryTextColor, fontSize: 16.0),
                           filled: true,
                           fillColor: inputBgColor,
@@ -158,16 +158,7 @@ class LivestockLoginPage extends StatelessWidget {
                           onTap: () {
                             // Handle forgot password
                           },
-                          child: Text(
-                            'Forgot password?',
-                            style: TextStyle(
-                              color: secondaryTextColor,
-                              fontSize: 14.0,
-                              fontWeight: FontWeight.normal,
-                              decoration: TextDecoration.underline,
-                              decorationColor: secondaryTextColor,
-                            ),
-                          ),
+
                         ),
                       ),
                     ),
@@ -195,7 +186,7 @@ class LivestockLoginPage extends StatelessWidget {
                           height: 48,
                           child: Center(
                             child: Text(
-                              'Login',
+                              'Đăng nhập',
                               style: TextStyle(
                                 color: primaryTextColor,
                                 fontSize: 16.0,
@@ -220,17 +211,7 @@ class LivestockLoginPage extends StatelessWidget {
                       onTap: () {
                         // Handle sign up
                       },
-                      child: Text(
-                        "Don't have an account? Sign up",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: secondaryTextColor,
-                          fontSize: 14.0,
-                          fontWeight: FontWeight.normal,
-                          decoration: TextDecoration.underline,
-                          decorationColor: secondaryTextColor,
-                        ),
-                      ),
+
                     ),
                   ),
                   Container(
