@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "889972463280",
+    "project_id": "live-stock-management-6a11a",
+    "storage_bucket": "live-stock-management-6a11a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:889972463280:android:9be2d38d70fbb49bfc8d75",
+        "android_client_info": {
+          "package_name": "com.example.livestockmanagement"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGuzC4IE_TuN4wXM9QolbLzBBfpzyAx6U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

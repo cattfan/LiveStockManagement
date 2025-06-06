@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class AddBarnPage extends StatefulWidget {
   const AddBarnPage({super.key});
@@ -14,6 +15,31 @@ class _AddBarnPageState extends State<AddBarnPage> {
   int used = 0;
   String temp = '';
   String humidity = '';
+
+  DatabaseReference dbRef = FirebaseDatabase.instance.ref();
+
+  void handleAddBarn() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+
+      dbRef.child("quan_ly_chan_nuoi/chuong_trai").push().set({
+        'name': barnName,
+        'capacity': capacity,
+        'used': used,
+        'temp': temp,
+        'humidity': humidity,
+      }).then((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Thêm chuồng trại thành công!')),
+        );
+        Navigator.pop(context, true);
+      }).catchError((error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Thêm thất bại: $error')),
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,15 +64,18 @@ class _AddBarnPageState extends State<AddBarnPage> {
                 decoration: const InputDecoration(labelText: 'Tên chuồng'),
                 onSaved: (value) => barnName = value ?? '',
                 validator: (value) =>
-                    value == null || value.isEmpty ? 'Vui lòng nhập tên' : null,
+                value == null || value.isEmpty ? 'Vui lòng nhập tên' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Số lượng tối đa'),
                 keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  capacity = int.tryParse(value) ?? 0;
+                },
                 onSaved: (value) => capacity = int.tryParse(value ?? '0') ?? 0,
                 validator: (value) =>
-                    value == null || value.isEmpty ? 'Nhập số lượng' : null,
+                value == null || value.isEmpty ? 'Nhập số lượng' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -77,18 +106,7 @@ class _AddBarnPageState extends State<AddBarnPage> {
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          _formKey.currentState!.save();
-                          Navigator.pop(context, {
-                            'name': barnName,
-                            'capacity': capacity,
-                            'used': used,
-                            'temp': temp,
-                            'humidity': humidity,
-                          });
-                        }
-                      },
+                      onPressed: handleAddBarn,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         padding: const EdgeInsets.symmetric(vertical: 12),
