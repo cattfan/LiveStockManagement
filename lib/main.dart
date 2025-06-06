@@ -61,14 +61,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _pages[_currentIndex],
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Colors.green[600],
-        foregroundColor: Colors.white,
-        elevation: 2.0,
-        shape: const CircleBorder(side: BorderSide(color: Colors.white, width: 4)),
-        child: const Icon(Icons.add, size: 32),
-      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomNav(
         currentIndex: _currentIndex,

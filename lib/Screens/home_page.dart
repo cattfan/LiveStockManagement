@@ -1,15 +1,66 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:livestockmanagement/widgets/feature_card.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/vaccination_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/storage_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/feed_management_page.dart';
+import 'home_child_screens/Barn_Page/barn_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/Barn_Page/barn_management_page.dart';
+import 'livestock_page.dart';
 
-
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _totalLivestock = 0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTotalLivestock();
+  }
+
+  void _fetchTotalLivestock() {
+    DatabaseReference vatnuoiRef = FirebaseDatabase.instance.ref('Vatnuoi');
+    vatnuoiRef.onValue.listen((DatabaseEvent event) {
+      if (event.snapshot.exists) {
+        final data = event.snapshot.value as Map<dynamic, dynamic>;
+        int sum = 0;
+        data.forEach((key, value) {
+          final animalData = value as Map<dynamic, dynamic>;
+          // Chuyển đổi Soluong sang int, nếu không phải số thì coi như là 0
+          final quantity = int.tryParse(animalData['Soluong'].toString()) ?? 0;
+          sum += quantity;
+        });
+
+        if (mounted) {
+          setState(() {
+            _totalLivestock = sum;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }, onError: (error) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,9 +160,6 @@ class HomePage extends StatelessWidget {
                           CircleAvatar(
                               radius: 32,
                               backgroundColor: Colors.green[500],
-                              backgroundImage: const NetworkImage(
-                                  'https://lh3.googleusercontent.com/a/ACg8ocK_'
-                                      '2P5yqJ7qCqP-jG0XyX9-g_Q8-X8jY5V5XwN4bQ=s96-c'),
                               child: const Icon(Icons.person, size: 32, color: Colors.white70)
                           ),
                           const SizedBox(width: 16),
@@ -163,21 +211,25 @@ class HomePage extends StatelessWidget {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       children: [
-                        const FeatureCard(icon: Icons.savings_outlined,
-                          label: 'Quản lý Vật nuôi',
-                          iconColor: Color(0xFF34D399),
-                          bgColor: Color(0xFFD1FAE5)
-
-                              ),
+                        FeatureCard(icon: Icons.savings_outlined,
+                            label: 'Quản lý Vật nuôi',
+                            iconColor: const Color(0xFF34D399),
+                            bgColor: const Color(0xFFD1FAE5),
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                                  LivestockGridScreen())
+                              );
+                            }
+                        ),
 
                         FeatureCard(icon: Icons.home_work_outlined,
                           label: 'Quản lý Chuồng trại',
                           iconColor: const Color(0xFF34D399),
                           bgColor: const Color(0xFFD1FAE5),
                           onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => 
-                                const BarnManagementPage())
-                              );
+                            Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                            const BarnManagementPage())
+                            );
                           },
                         ),
                         FeatureCard(icon: Icons.grass_outlined,
@@ -185,9 +237,9 @@ class HomePage extends StatelessWidget {
                           iconColor: const Color(0xFF34D399),
                           bgColor: const Color(0xFFD1FAE5),
                           onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => 
-                                const FeedManagementPage())
-                              );
+                            Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                            const FeedManagementPage())
+                            );
                           },
                         ),
                         FeatureCard(icon: Icons.vaccines_outlined,
@@ -195,9 +247,9 @@ class HomePage extends StatelessWidget {
                           iconColor: const Color(0xFF34D399),
                           bgColor: const Color(0xFFD1FAE5),
                           onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => 
-                                const VaccinationPage())
-                              );
+                            Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                            const VaccinationPage())
+                            );
                           },
                         ),
                         FeatureCard(icon: Icons.inventory_2_outlined,
@@ -205,15 +257,15 @@ class HomePage extends StatelessWidget {
                           iconColor: const Color(0xFF34D399),
                           bgColor: const Color(0xFFD1FAE5),
                           onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                               const StorageManagementPage())
+                            Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                            const StorageManagementPage())
                             );
                           },
                         ),
                         const FeatureCard(icon: Icons.receipt_long_outlined,
-                          label: 'Ghi chép',
-                          iconColor: Color(0xFF34D399),
-                          bgColor: Color(0xFFD1FAE5)
+                            label: 'Ghi chép',
+                            iconColor: Color(0xFF34D399),
+                            bgColor: Color(0xFFD1FAE5)
                         ),
                       ],
                     ),
@@ -290,7 +342,7 @@ class HomePage extends StatelessWidget {
                         style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                       ),
                       Text(
-                        '1,250',
+                        _isLoading ? 'Đang tải...' : _totalLivestock.toString(),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
