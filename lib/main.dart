@@ -5,9 +5,17 @@ import 'package:livestockmanagement/Screens/home_page.dart';
 import 'package:livestockmanagement/Screens/livestock_page.dart';
 import 'package:livestockmanagement/Screens/setting_page.dart';
 
-void main() {
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const FarmApp());
 }
+
 
 class FarmApp extends StatelessWidget {
   const FarmApp({super.key});
