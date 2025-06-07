@@ -1,5 +1,8 @@
+// File: lib/Screens/home_child_screens/feed_management_page.dart
+
 import 'package:flutter/material.dart';
-import 'package:firebase_database/firebase_database.dart'; // Import Firebase Database
+import 'package:firebase_database/firebase_database.dart';
+import 'dart:async'; // Dùng cho StreamSubscription
 
 class FeedManagementPage extends StatefulWidget {
   const FeedManagementPage({super.key});
@@ -9,12 +12,10 @@ class FeedManagementPage extends StatefulWidget {
 }
 
 class _FeedManagementPageState extends State<FeedManagementPage> {
-  List<Map<String, String>> _feedItems = [];
-
-  // Define the Firebase database reference for 'Thucan'
-  // Đã đổi tên biến theo chuẩn lowerCamelCase
-  final DatabaseReference _ThucanRef = FirebaseDatabase.instance.ref('Thucan');
-  // ^ Đảm bảo rằng 'Thuocan' là node gốc chứa danh sách các mục thức ăn của bạn trong Firebase
+  List<Map<String, dynamic>> _feedItems = []; // Thay đổi kiểu dữ liệu thành dynamic để linh hoạt hơn
+  late StreamSubscription<DatabaseEvent> _feedSubscription; // Thêm StreamSubscription
+  final DatabaseReference _feedRef = FirebaseDatabase.instance.ref('Thucan');
+  // ^ Đảm bảo rằng 'Thucan' là node gốc chứa danh sách các mục thức ăn của bạn trong Firebase
 
   @override
   void initState() {
@@ -24,23 +25,22 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
 
   // Function to fetch data from Firebase
   void _fetchFeedItemsFromFirebase() {
-    print('--- Đang lắng nghe dữ liệu từ Firebase tại ${_ThucanRef.path} ---');
-    _ThucanRef.onValue.listen((event) {
+    print('--- Đang lắng nghe dữ liệu từ Firebase tại ${_feedRef.path} ---');
+    _feedSubscription = _feedRef.onValue.listen((event) {
       final data = event.snapshot.value;
       print('--- Dữ liệu thô từ Firebase: $data ---'); // IN RA DỮ LIỆU THÔ ĐỂ KIỂM TRA
 
-      final List<Map<String, String>> fetchedItems = [];
+      final List<Map<String, dynamic>> fetchedItems = []; // Sử dụng dynamic
       if (data != null && data is Map) {
         data.forEach((key, value) {
           if (value is Map) {
-            // SỬA TÊN TRƯỜNG ĐỂ KHỚP VỚI FIREBASE
-            // Dựa trên ảnh: HanDuoung, khoiluong, Phanloai, ngaysx
+            // SỬA TÊN TRƯỜNG ĐỂ KHỚP VỚI FIREBASE CỦA BẠN: HanDuoung, khoiluong, Phanloai, ngaysx
             fetchedItems.add({
               'id': key, // Store the Firebase key for updates/deletes
-              'name': value['HanDuoung']?.toString() ?? '', // Giả định 'HanDuoung' dùng làm tên
-              'expiryDate': value['ngaysx']?.toString() ?? '', // 'ngaysx' cho hạn sử dụng
-              'weight': value['khoiluong']?.toString() ?? '', // 'khoiluong' cho khối lượng
-              'type': value['Phanloai']?.toString() ?? '', // 'Phanloai' cho loại
+              'name': value['HanDuoung']?.toString() ?? 'Không tên', // Dùng HanDuoung làm tên hiển thị
+              'expiryDate': value['ngaysx']?.toString() ?? 'N/A', // ngaysx là ngày sản xuất/hạn dùng
+              'weight': value['khoiluong']?.toString() ?? '0 Kg', // khoiluong
+              'type': value['Phanloai']?.toString() ?? 'Không loại', // Phanloai
             });
           }
         });
@@ -55,23 +55,39 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
     }, onError: (Object error) {
       print('--- LỖI khi tải dữ liệu từ Firebase: $error ---');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi khi tải dữ liệu: $error')),
+        SnackBar(content: Text('Lỗi khi tải dữ liệu thức ăn: $error')),
       );
     });
   }
 
-  // Hàm này không được gọi trong code hiện tại, cân nhắc xóa hoặc sử dụng
-  // if (updatedItem != null) { _updateFeedItem(index, updatedItem); }
-  // sau khi Navigator.pop từ EditFeedItemPage
-  void _updateFeedItem(int index, Map<String, String> updatedItem) {
-    String? itemId = _feedItems[index]['id'];
+  // Hàm để thêm mục mới vào Firebase
+  void _addFeedItem(Map<String, dynamic> newItem) { // Thay đổi kiểu dữ liệu thành dynamic
+    // SỬA TÊN TRƯỜNG ĐỂ KHỚP VỚI FIREBASE KHI THÊM MỚI
+    _feedRef.push().set({
+      'HanDuoung': newItem['name'], // name trong form -> HanDuoung trong Firebase
+      'ngaysx': newItem['expiryDate'], // expiryDate trong form -> ngaysx trong Firebase
+      'khoiluong': newItem['weight'], // weight trong form -> khoiluong trong Firebase (đã xử lý " Kg" trong AddForm)
+      'Phanloai': newItem['type'], // type trong form -> Phanloai trong Firebase
+    }).then((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Thêm thức ăn thành công!')),
+      );
+    }).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Thêm thất bại: $error')),
+      );
+    });
+  }
+
+  // Hàm để cập nhật mục trong Firebase
+  void _updateFeedItem(String itemId, Map<String, dynamic> updatedItem) { // Thay đổi kiểu dữ liệu thành dynamic
     if (itemId != null) {
       // SỬA TÊN TRƯỜNG ĐỂ KHỚP VỚI FIREBASE KHI GHI
-      _ThucanRef.child(itemId).update({
-        'HanDuoung': updatedItem['name'], // name trong code -> HanDuoung trong Firebase
-        'ngaysx': updatedItem['expiryDate'], // expiryDate trong code -> ngaysx trong Firebase
-        'khoiluong': updatedItem['weight'], // weight trong code -> khoiluong trong Firebase
-        'Phanloai': updatedItem['type'], // type trong code -> Phanloai trong Firebase
+      _feedRef.child(itemId).update({
+        'HanDuoung': updatedItem['name'], // name trong form -> HanDuoung trong Firebase
+        'ngaysx': updatedItem['expiryDate'], // expiryDate trong form -> ngaysx trong Firebase
+        'khoiluong': updatedItem['weight'], // weight trong form -> khoiluong trong Firebase (đã xử lý " Kg" trong EditForm)
+        'Phanloai': updatedItem['type'], // type trong form -> Phanloai trong Firebase
       }).then((_) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Cập nhật thức ăn thành công!')),
@@ -84,25 +100,8 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
     }
   }
 
-  void _addFeedItem(Map<String, String> newItem) {
-    // SỬA TÊN TRƯỜNG ĐỂ KHỚP VỚI FIREBASE KHI THÊM MỚI
-    _ThucanRef.push().set({
-      'HanDuoung': newItem['name'],
-      'ngaysx': newItem['expiryDate'],
-      'khoiluong': newItem['weight'],
-      'Phanloai': newItem['type'],
-    }).then((_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Thêm thức ăn thành công!')),
-      );
-    }).catchError((error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Thêm thất bại: $error')),
-      );
-    });
-  }
-
-  void _deleteFeedItem(int index) {
+  // Hàm để xóa mục khỏi Firebase
+  void _deleteFeedItem(String itemId) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -118,9 +117,8 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
             ),
             ElevatedButton(
               onPressed: () {
-                String? itemId = _feedItems[index]['id'];
                 if (itemId != null) {
-                  _ThucanRef.child(itemId).remove().then((_) {
+                  _feedRef.child(itemId).remove().then((_) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Xóa thức ăn thành công!')),
                     );
@@ -138,6 +136,12 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _feedSubscription.cancel(); // Hủy lắng nghe khi widget bị hủy
+    super.dispose();
   }
 
   @override
@@ -171,7 +175,7 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
               builder: (context) => const AddFeedItemPage(),
             ),
           );
-          if (newItem != null) {
+          if (newItem != null && newItem is Map<String, String>) { // Kiểm tra kiểu dữ liệu
             _addFeedItem(newItem);
           }
         },
@@ -201,13 +205,13 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
       itemCount: _feedItems.length,
       itemBuilder: (context, index) {
         final item = _feedItems[index];
-        return _buildFeedItemCard(context, index, item);
+        return _buildFeedItemCard(context, item); // Chỉ truyền item, không cần index nữa
       },
     );
   }
 
   Widget _buildFeedItemCard(
-      BuildContext context, int index, Map<String, String> item) {
+      BuildContext context, Map<String, dynamic> item) { // Thay đổi kiểu dữ liệu
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
@@ -216,14 +220,14 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
         contentPadding:
         const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         title: Text(
-          item['name']!,
+          item['name']!, // 'name' ở đây là 'HanDuoung' từ Firebase
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Text('Hạn sử dụng: ${item['expiryDate']}',
+            Text('Ngày sản xuất: ${item['expiryDate']}', // Sử dụng 'ngaysx'
                 style: const TextStyle(fontSize: 14, color: Colors.grey)),
             Text('Khối lượng: ${item['weight']}',
                 style: const TextStyle(fontSize: 14, color: Colors.grey)),
@@ -237,7 +241,7 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
             IconButton(
               icon: const Icon(Icons.edit, color: Colors.blue),
               onPressed: () async {
-                final updatedItemData = await Navigator.push( // Đổi tên biến để rõ ràng hơn
+                final updatedItemData = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => EditFeedItemPage(
@@ -249,16 +253,14 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
                     ),
                   ),
                 );
-                // Bạn có thể gọi _updateFeedItem ở đây nếu muốn update ngay lập tức
-                // thay vì chờ onValue listener tự động cập nhật
                 if (updatedItemData != null && updatedItemData is Map<String, String>) {
-                  _updateFeedItem(index, updatedItemData);
+                  _updateFeedItem(item['id']!, updatedItemData); // Truyền ID và dữ liệu đã cập nhật
                 }
               },
             ),
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => _deleteFeedItem(index),
+              onPressed: () => _deleteFeedItem(item['id']!), // Xóa theo ID
             ),
           ],
         ),
@@ -267,7 +269,7 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
   }
 }
 
-// AddFeedItemPage (Không có thay đổi về cú pháp)
+// AddFeedItemPage
 class AddFeedItemPage extends StatefulWidget {
   const AddFeedItemPage({super.key});
 
@@ -279,7 +281,7 @@ class _AddFeedItemPageState extends State<AddFeedItemPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _expiryDateController = TextEditingController();
-  final TextEditingController _weightController = TextEditingController(text: '0');
+  final TextEditingController _weightController = TextEditingController(); // Không đặt giá trị mặc định '0'
   String? _selectedType;
 
   final List<String> _feedTypes = [
@@ -290,6 +292,8 @@ class _AddFeedItemPageState extends State<AddFeedItemPage> {
   @override
   void initState() {
     super.initState();
+    // Đặt giá trị mặc định cho weight nếu muốn
+    _weightController.text = '0'; // Hoặc bỏ qua để người dùng nhập
     _selectedType = _feedTypes.first;
   }
 
@@ -331,11 +335,11 @@ class _AddFeedItemPageState extends State<AddFeedItemPage> {
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: Column(
+          child: ListView( // Thay Column bằng ListView để tránh overflow
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Tên thức ăn'),
+                decoration: const InputDecoration(labelText: 'Tên thức ăn (Hạn Dùng/Tình trạng)'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Vui lòng nhập tên thức ăn';
@@ -346,7 +350,7 @@ class _AddFeedItemPageState extends State<AddFeedItemPage> {
               TextFormField(
                 controller: _expiryDateController,
                 decoration: InputDecoration(
-                  labelText: 'Hạn sử dụng (DD/MM/YYYY)',
+                  labelText: 'Ngày sản xuất (DD/MM/YYYY)', // Đổi label cho khớp với Firebase
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.calendar_today),
                     onPressed: () => _selectDate(context),
@@ -355,15 +359,15 @@ class _AddFeedItemPageState extends State<AddFeedItemPage> {
                 readOnly: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Vui lòng chọn hạn sử dụng';
+                    return 'Vui lòng chọn ngày sản xuất';
                   }
                   return null;
                 },
               ),
               TextFormField(
                 controller: _weightController,
-                decoration: const InputDecoration(labelText: 'Khối lượng'),
-                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Khối lượng (Kg)'),
+                keyboardType: TextInputType.number, // Chỉ cho phép nhập số
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Vui lòng nhập khối lượng';
@@ -404,7 +408,7 @@ class _AddFeedItemPageState extends State<AddFeedItemPage> {
                       {
                         'name': _nameController.text,
                         'expiryDate': _expiryDateController.text,
-                        'weight': '${_weightController.text} Kg',
+                        'weight': '${_weightController.text} Kg', // Thêm ' Kg' khi trả về
                         'type': _selectedType!,
                       },
                     );
@@ -420,13 +424,13 @@ class _AddFeedItemPageState extends State<AddFeedItemPage> {
   }
 }
 
-// EditFeedItemPage (Đã sửa lỗi cú pháp)
+// EditFeedItemPage
 class EditFeedItemPage extends StatefulWidget {
   final String id;
-  final String name;
-  final String expiryDate;
-  final String weight;
-  final String type;
+  final String name; // (HanDuoung)
+  final String expiryDate; // (ngaysx)
+  final String weight; // (khoiluong)
+  final String type; // (Phanloai)
 
   const EditFeedItemPage({
     super.key,
@@ -459,13 +463,14 @@ class _EditFeedItemPageState extends State<EditFeedItemPage> {
     _nameController = TextEditingController(text: widget.name);
     _expiryDateController = TextEditingController(text: widget.expiryDate);
 
+    // Loại bỏ " Kg" khi hiển thị để người dùng dễ chỉnh sửa số
     String initialWeight = widget.weight.replaceAll(' Kg', '').trim();
     _weightController = TextEditingController(text: initialWeight);
 
     if (_feedTypes.contains(widget.type)) {
       _selectedType = widget.type;
     } else {
-      _selectedType = _feedTypes.first;
+      _selectedType = _feedTypes.first; // Đặt giá trị mặc định nếu không khớp
     }
   }
 
@@ -480,7 +485,7 @@ class _EditFeedItemPageState extends State<EditFeedItemPage> {
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: DateTime.now(), // Có thể đặt initialDate dựa trên widget.expiryDate nếu muốn
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
@@ -507,11 +512,11 @@ class _EditFeedItemPageState extends State<EditFeedItemPage> {
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: Column(
+          child: ListView( // Thay Column bằng ListView để tránh overflow
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Tên thức ăn'),
+                decoration: const InputDecoration(labelText: 'Tên thức ăn (Hạn Dùng/Tình trạng)'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Vui lòng nhập tên thức ăn';
@@ -522,7 +527,7 @@ class _EditFeedItemPageState extends State<EditFeedItemPage> {
               TextFormField(
                 controller: _expiryDateController,
                 decoration: InputDecoration(
-                  labelText: 'Hạn sử dụng (DD/MM/YYYY)',
+                  labelText: 'Ngày sản xuất (DD/MM/YYYY)', // Đổi label cho khớp
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.calendar_today),
                     onPressed: () => _selectDate(context),
@@ -531,14 +536,14 @@ class _EditFeedItemPageState extends State<EditFeedItemPage> {
                 readOnly: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Vui lòng chọn hạn sử dụng';
+                    return 'Vui lòng chọn ngày sản xuất';
                   }
                   return null;
                 },
               ),
               TextFormField(
                 controller: _weightController,
-                decoration: const InputDecoration(labelText: 'Khối lượng'),
+                decoration: const InputDecoration(labelText: 'Khối lượng (Kg)'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -580,8 +585,8 @@ class _EditFeedItemPageState extends State<EditFeedItemPage> {
                       {
                         'name': _nameController.text,
                         'expiryDate': _expiryDateController.text,
-                        'weight': '${_weightController.text} Kg',
-                        'type': _selectedType ?? '',
+                        'weight': '${_weightController.text} Kg', // Thêm ' Kg' khi trả về
+                        'type': _selectedType!,
                       },
                     );
                   }
