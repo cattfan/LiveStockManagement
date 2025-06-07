@@ -48,6 +48,7 @@ class DefaultFirebaseOptions {
     authDomain: 'live-stock-management-6a11a.firebaseapp.com',
     storageBucket: 'live-stock-management-6a11a.firebasestorage.app',
     measurementId: 'G-T0XVCWQ57E',
+      databaseURL: 'https://live-stock-management-6a11a-default-rtdb.asia-southeast1.firebasedatabase.app/'
   );
 
   static const FirebaseOptions android = FirebaseOptions(
