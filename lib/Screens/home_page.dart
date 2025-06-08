@@ -21,11 +21,14 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _totalLivestock = 0;
   bool _isLoading = true;
+  int _noteCount = 0;
+
 
   @override
   void initState() {
     super.initState();
     _fetchTotalLivestock();
+    _fetchNoteCount();
   }
 
   void _fetchTotalLivestock() {
@@ -62,6 +65,39 @@ class _HomePageState extends State<HomePage> {
       }
     });
   }
+  void _fetchNoteCount() {
+    DatabaseReference notesRef = FirebaseDatabase.instance.ref('notes');
+    notesRef.onValue.listen((DatabaseEvent event) {
+      final snapshot = event.snapshot;
+
+      if (snapshot.exists) {
+        final value = snapshot.value;
+
+        int count = 0;
+
+        if (value is Map) {
+          // Đếm số lượng các key trong Map (số lượng ghi chú)
+          count = value.length;
+        }
+
+        if (mounted) {
+          setState(() {
+            _noteCount = count;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _noteCount = 0;
+          });
+        }
+      }
+    }, onError: (error) {
+      debugPrint('Lỗi khi lấy ghi chú: $error');
+    });
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -372,17 +408,14 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Cần chú ý',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                      ),
-                      Text(
-                        '15',
+                        _isLoading ? 'Đang tải...' : _noteCount.toString(),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Colors.yellow[700],
                         ),
                       ),
+
                     ],
                   ),
                 ),

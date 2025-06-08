@@ -160,7 +160,6 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildSectionTitle('Danh sách thức ăn'),
             Expanded(
               child: _buildFeedItemsList(),
             ),
