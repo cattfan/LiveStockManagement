@@ -8,10 +8,11 @@ import 'package:livestockmanagement/Screens/home_child_screens/vaccination_page.
 import 'package:livestockmanagement/Screens/home_child_screens/storage_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/feed_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/Barn_Page/barn_management_page.dart';
-import 'home_child_screens/livestock_management/livestock_management_page.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/livestock_management/livestock_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/note_page/note_page.dart';
 
 class HomePage extends StatefulWidget {
+  // Loại bỏ hàm callback không cần thiết
   const HomePage({super.key});
 
   @override
@@ -51,7 +52,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _fetchTodayNotes() {
-    // SỬA: Đảm bảo đọc từ node 'ghi_chu'
     _userRef?.child('ghi_chu').onValue.listen((DatabaseEvent event) {
       if (!mounted) return;
       final snapshot = event.snapshot;
@@ -91,7 +91,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _fetchTotalLivestock() {
-    // SỬA: Đảm bảo đọc từ node 'vat_nuoi'
     _userRef
         ?.child('vat_nuoi')
         .onValue
@@ -126,7 +125,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _fetchNoteCount() {
-    // SỬA: Đảm bảo đọc từ node 'ghi_chu'
     _userRef?.child('ghi_chu').onValue.listen((DatabaseEvent event) {
       if (!mounted) return;
       final snapshot = event.snapshot;
@@ -275,6 +273,7 @@ class _HomePageState extends State<HomePage> {
                         label: 'Quản lý Vật nuôi',
                         iconColor: const Color(0xFF34D399),
                         bgColor: const Color(0xFFD1FAE5),
+                        // *** KHÔI PHỤC LẠI NAVIGATOR.PUSH ***
                         onTap: () {
                           Navigator.push(
                             context,

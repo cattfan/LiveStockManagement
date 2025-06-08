@@ -16,7 +16,6 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _capacityController;
-  late TextEditingController _usedController;
   late TextEditingController _tempController;
   late TextEditingController _humidityController;
 
@@ -36,9 +35,6 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
     _capacityController = TextEditingController(
       text: widget.barn?.capacity.toString() ?? '',
     );
-    _usedController = TextEditingController(
-      text: widget.barn?.used.toString() ?? '',
-    );
     _tempController = TextEditingController(
       text: widget.barn?.temp.replaceAll('°C', '').trim() ?? '',
     );
@@ -51,7 +47,6 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
   void dispose() {
     _nameController.dispose();
     _capacityController.dispose();
-    _usedController.dispose();
     _tempController.dispose();
     _humidityController.dispose();
     super.dispose();
@@ -72,23 +67,22 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
               ? '${_humidityController.text}%'
               : '';
 
-      final newBarn = Barn(
-        id: widget.barn?.id,
-        name: _nameController.text,
-        capacity: int.tryParse(_capacityController.text) ?? 0,
-        used: int.tryParse(_usedController.text) ?? 0,
-        temp: tempValue,
-        humidity: humidityValue,
-      );
+      final Map<String, dynamic> barnData = {
+        'name': _nameController.text,
+        'capacity': int.tryParse(_capacityController.text) ?? 0,
+        'temp': tempValue,
+        'humidity': humidityValue,
+      };
 
       try {
         if (widget.barn == null) {
-          await _dbRef!.push().set(newBarn.toJson());
+          barnData['used'] = 0;
+          await _dbRef!.push().set(barnData);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Thêm chuồng trại thành công!')),
           );
         } else {
-          await _dbRef!.child(newBarn.id!).update(newBarn.toJson());
+          await _dbRef!.child(widget.barn!.id!).update(barnData);
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('Cập nhật thành công!')));
@@ -102,7 +96,30 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
     }
   }
 
+  // --- CHỨC NĂNG XÓA CHUỒNG TRẠI ---
   Future<void> _deleteBarn() async {
+    // *** RÀNG BUỘC ĐIỀU KIỆN: Kiểm tra xem chuồng có đang chứa vật nuôi không ***
+    // Nếu trường 'used' (số lượng đã dùng) lớn hơn 0, hiển thị cảnh báo và không cho xóa.
+    if (widget.barn != null && widget.barn!.used > 0) {
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Không thể xóa'),
+              content: const Text(
+                'Vui lòng di chuyển hoặc xóa hết vật nuôi khỏi chuồng này trước khi xóa chuồng.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+      );
+      return; // Dừng hàm tại đây
+    }
+
     if (_dbRef == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lỗi: Người dùng chưa đăng nhập.')),
@@ -110,6 +127,7 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
       return;
     }
 
+    // Hiển thị hộp thoại xác nhận trước khi xóa
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -132,6 +150,7 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
       },
     );
 
+    // Nếu người dùng xác nhận, tiến hành xóa
     if (confirmed == true && widget.barn != null) {
       try {
         await _dbRef!.child(widget.barn!.id!).remove();
@@ -162,6 +181,7 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        // Hiển thị nút xóa trên AppBar nếu đang ở chế độ sửa
         actions: [
           if (widget.barn != null)
             IconButton(
@@ -188,24 +208,15 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
                 controller: _capacityController,
                 decoration: const InputDecoration(labelText: 'Sức chứa tối đa'),
                 keyboardType: TextInputType.number,
-                validator:
-                    (value) => value!.isEmpty ? 'Vui lòng nhập sức chứa' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _usedController,
-                decoration: const InputDecoration(
-                  labelText: 'Số lượng đang sử dụng',
-                ),
-                keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Nhập số lượng';
-                  final intValue = int.tryParse(value);
-                  final int capacity =
-                      int.tryParse(_capacityController.text) ?? 0;
-                  if (intValue == null) return 'Không hợp lệ';
-                  if (intValue > capacity) {
-                    return 'Không được vượt quá sức chứa';
+                  if (value == null || value.isEmpty)
+                    return 'Vui lòng nhập sức chứa';
+                  final capacity = int.tryParse(value);
+                  if (capacity == null || capacity <= 0)
+                    return 'Sức chứa phải là số dương';
+                  // Ràng buộc: Sức chứa mới không được nhỏ hơn số lượng vật nuôi đang có
+                  if (widget.barn != null && capacity < widget.barn!.used) {
+                    return 'Sức chứa không được nhỏ hơn số lượng hiện có (${widget.barn!.used})';
                   }
                   return null;
                 },
