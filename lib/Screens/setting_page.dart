@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/auth_page/login_page.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -152,7 +153,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('Đổi mật khẩu'),
             onTap: () {},
           ),
-
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
@@ -168,18 +168,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder:
-          (_) => AlertDialog(
+          (dialogContext) => AlertDialog(
             title: const Text('Xác nhận đăng xuất'),
             content: const Text('Bạn có muốn đăng xuất hay không?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(dialogContext),
                 child: const Text('Không'),
               ),
               ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _signOut();
+                onPressed: () async {
+                  final pageContext = context;
+                  Navigator.pop(dialogContext);
+                  await _signOut();
+
+                  if (mounted) {
+                    Navigator.of(pageContext).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => const LivestockLoginPage(),
+                      ),
+                      (Route<dynamic> route) => false,
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 child: const Text('Có', style: TextStyle(color: Colors.white)),

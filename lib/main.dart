@@ -5,8 +5,8 @@ import 'package:livestockmanagement/Screens/statistics_page.dart';
 import 'package:livestockmanagement/widgets/bottom_nav.dart';
 import 'package:livestockmanagement/Screens/home_page.dart';
 import 'package:livestockmanagement/Screens/setting_page.dart';
-import 'package:livestockmanagement/Screens/login_page.dart';
-import 'package:livestockmanagement/Screens/getusername.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/auth_page/login_page.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/auth_page/getusername.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
