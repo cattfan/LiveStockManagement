@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
@@ -8,7 +9,6 @@ import 'package:livestockmanagement/Screens/home_child_screens/storage_managemen
 import 'package:livestockmanagement/Screens/home_child_screens/feed_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/Barn_Page/barn_management_page.dart';
 import 'home_child_screens/livestock_management/livestock_management_page.dart';
-import 'livestock_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/note_page/note_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -23,22 +23,40 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = true;
   int _noteCount = 0;
   List<Note> _todayNotes = [];
+  String _userName = "User";
+
+  DatabaseReference? _userRef;
 
   @override
   void initState() {
     super.initState();
-    _fetchTotalLivestock();
-    _fetchNoteCount();
-    _fetchTodayNotes();
+    _initializeUserData();
+  }
+
+  void _initializeUserData() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _userName = user.displayName ?? user.email ?? "User";
+      _userRef = FirebaseDatabase.instance.ref('app_data/${user.uid}');
+      _fetchTotalLivestock();
+      _fetchNoteCount();
+      _fetchTodayNotes();
+    } else {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _fetchTodayNotes() {
-    DatabaseReference notesRef = FirebaseDatabase.instance.ref('notes');
-    notesRef.onValue.listen((DatabaseEvent event) {
+    _userRef?.child('ghi_chu').onValue.listen((DatabaseEvent event) {
+      if (!mounted) return;
       final snapshot = event.snapshot;
-      if (snapshot.exists && mounted) {
+      final List<Note> loadedNotes = [];
+      if (snapshot.exists && snapshot.value is Map) {
         final notesMap = Map<String, dynamic>.from(snapshot.value as Map);
-        final List<Note> loadedNotes = [];
         final today = DateTime.now();
 
         notesMap.forEach((key, value) {
@@ -63,78 +81,56 @@ class _HomePageState extends State<HomePage> {
         });
 
         loadedNotes.sort((a, b) => a.reminderDate!.compareTo(b.reminderDate!));
-
-        setState(() {
-          _todayNotes = loadedNotes;
-        });
       }
+      setState(() {
+        _todayNotes = loadedNotes;
+      });
     }, onError: (error) {});
   }
 
   void _fetchTotalLivestock() {
-    DatabaseReference vatnuoiRef = FirebaseDatabase.instance.ref('Vatnuoi');
-    vatnuoiRef.onValue.listen(
-      (DatabaseEvent event) {
-        if (event.snapshot.exists) {
-          final data = event.snapshot.value as Map<dynamic, dynamic>;
-          int sum = 0;
-          data.forEach((key, value) {
-            final animalData = value as Map<dynamic, dynamic>;
-            final quantity =
-                int.tryParse(animalData['Soluong'].toString()) ?? 0;
-            sum += quantity;
-          });
-
-          if (mounted) {
+    _userRef
+        ?.child('vat_nuoi')
+        .onValue
+        .listen(
+          (DatabaseEvent event) {
+            if (!mounted) return;
+            int sum = 0;
+            if (event.snapshot.exists && event.snapshot.value is Map) {
+              final data = event.snapshot.value as Map;
+              data.forEach((key, value) {
+                final animalData = value as Map;
+                final quantity =
+                    int.tryParse(animalData['soLuong']?.toString() ?? '0') ?? 0;
+                sum += quantity;
+              });
+            }
             setState(() {
               _totalLivestock = sum;
               _isLoading = false;
             });
-          }
-        } else {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-          }
-        }
-      },
-      onError: (error) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      },
-    );
+          },
+          onError: (error) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+              });
+            }
+          },
+        );
   }
 
   void _fetchNoteCount() {
-    DatabaseReference notesRef = FirebaseDatabase.instance.ref('notes');
-    notesRef.onValue.listen((DatabaseEvent event) {
+    _userRef?.child('ghi_chu').onValue.listen((DatabaseEvent event) {
+      if (!mounted) return;
       final snapshot = event.snapshot;
-
-      if (snapshot.exists) {
-        final value = snapshot.value;
-
-        int count = 0;
-
-        if (value is Map) {
-          count = value.length;
-        }
-
-        if (mounted) {
-          setState(() {
-            _noteCount = count;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _noteCount = 0;
-          });
-        }
+      int count = 0;
+      if (snapshot.exists && snapshot.value is Map) {
+        count = (snapshot.value as Map).length;
       }
+      setState(() {
+        _noteCount = count;
+      });
     }, onError: (error) {});
   }
 
@@ -142,6 +138,10 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final constrainedWidth = screenWidth > 500 ? 500.0 : screenWidth;
+
+    if (_userRef == null) {
+      return const Center(child: Text("Không có người dùng đăng nhập."));
+    }
 
     return Center(
       child: ConstrainedBox(
@@ -219,7 +219,7 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Xin chào, An Nguyễn!',
+                                'Xin chào, $_userName!',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
@@ -321,7 +321,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       FeatureCard(
                         icon: Icons.inventory_2_outlined,
-                        label: 'Quản lý Kho',
+                        label: 'Quản lý Vật tư',
                         iconColor: const Color(0xFF34D399),
                         bgColor: const Color(0xFFD1FAE5),
                         onTap: () {
@@ -412,7 +412,7 @@ class _HomePageState extends State<HomePage> {
                         style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                       ),
                       Text(
-                        _isLoading ? 'Đang tải...' : _totalLivestock.toString(),
+                        _isLoading ? '...' : _totalLivestock.toString(),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -439,7 +439,7 @@ class _HomePageState extends State<HomePage> {
                         style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                       ),
                       Text(
-                        _isLoading ? 'Đang tải...' : _noteCount.toString(),
+                        _isLoading ? '...' : _noteCount.toString(),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/livestock_management/livestock_model.dart';
@@ -7,15 +8,30 @@ class LivestockManagementPage extends StatefulWidget {
   const LivestockManagementPage({super.key});
 
   @override
-  State<LivestockManagementPage> createState() => _LivestockManagementPageState();
+  State<LivestockManagementPage> createState() =>
+      _LivestockManagementPageState();
 }
+
 class _LivestockManagementPageState extends State<LivestockManagementPage> {
-  // Tham chiếu đến node 'vat_nuoi' trong Realtime Database
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref(
-      'quan_ly_chan_nuoi/vat_nuoi');
+  DatabaseReference? _dbRef;
+
+  @override
+  void initState() {
+    super.initState();
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      _dbRef = FirebaseDatabase.instance.ref('app_data/$userId/vat_nuoi');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_dbRef == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Quản lý vật nuôi')),
+        body: const Center(child: Text("Vui lòng đăng nhập để xem dữ liệu.")),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         leading: const BackButton(color: Colors.black),
@@ -28,7 +44,7 @@ class _LivestockManagementPageState extends State<LivestockManagementPage> {
         ),
       ),
       body: StreamBuilder(
-        stream: _dbRef.onValue, // Lắng nghe sự thay đổi dữ liệu tại node này
+        stream: _dbRef!.onValue,
         builder: (context, AsyncSnapshot<DatabaseEvent> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -40,20 +56,23 @@ class _LivestockManagementPageState extends State<LivestockManagementPage> {
             return const Center(child: Text('Chưa có vật nuôi nào.'));
           }
 
-          final Map<dynamic, dynamic> data = snapshot.data!.snapshot
-              .value as Map<dynamic, dynamic>;
+          // Using a Map<String, dynamic> is safer
+          final data = Map<String, dynamic>.from(
+            snapshot.data!.snapshot.value as Map,
+          );
           final List<Livestock> livestockList = [];
 
           data.forEach((key, value) {
-            // SỬA LỖI: Tạo đối tượng Livestock trực tiếp từ Map
-            final livestockMap = value as Map<dynamic, dynamic>;
-            livestockList.add(Livestock(
-              id: key,
-              ten: livestockMap['ten'] ?? '',
-              chuong: livestockMap['chuong'] ?? '',
-              soLuong: (livestockMap['soLuong'] ?? 0) as int,
-              thucAn: livestockMap['thucAn'] ?? '',
-            ));
+            final livestockMap = Map<String, dynamic>.from(value as Map);
+            livestockList.add(
+              Livestock(
+                id: key,
+                ten: livestockMap['ten'] ?? '',
+                chuong: livestockMap['chuong'] ?? '',
+                soLuong: (livestockMap['soLuong'] ?? 0) as int,
+                thucAn: livestockMap['thucAn'] ?? '',
+              ),
+            );
           });
 
           return ListView.builder(
@@ -64,19 +83,25 @@ class _LivestockManagementPageState extends State<LivestockManagementPage> {
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 8.0),
                 child: ListTile(
-                  title: Text(livestock.ten, style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 18)),
+                  title: Text(
+                    livestock.ten,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
                   subtitle: Text(
-                      'Chuồng: ${livestock.chuong}, Số lượng: ${livestock
-                          .soLuong}, Thức ăn: ${livestock.thucAn}'),
+                    'Chuồng: ${livestock.chuong}, Số lượng: ${livestock.soLuong}, Thức ăn: ${livestock.thucAn}',
+                  ),
                   trailing: IconButton(
                     icon: const Icon(Icons.edit, color: Colors.black54),
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              AddEditLivestockPage(livestock: livestock),
+                          builder:
+                              (context) =>
+                                  AddEditLivestockPage(livestock: livestock),
                         ),
                       );
                     },
@@ -89,7 +114,6 @@ class _LivestockManagementPageState extends State<LivestockManagementPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Điều hướng đến trang thêm mới (không truyền livestock)
           Navigator.push(
             context,
             MaterialPageRoute(
