@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
 import 'package:livestockmanagement/models/note_model.dart';
-import 'package:livestockmanagement/Screens/add_note_page.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/note_page/add_note_page.dart';
 
 class NotesListPage extends StatefulWidget {
   const NotesListPage({super.key});
@@ -58,11 +58,12 @@ class _NotesListPageState extends State<NotesListPage> {
       color: cardBgColor,
       elevation: 0,
       margin: const EdgeInsets.symmetric(vertical: 6.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 12.0,
+          horizontal: 16.0,
+        ),
         title: Text(
           note.title,
           style: const TextStyle(
@@ -87,10 +88,16 @@ class _NotesListPageState extends State<NotesListPage> {
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Row(
                     children: [
-                      const Icon(Icons.alarm, color: secondaryTextColor, size: 16),
+                      const Icon(
+                        Icons.alarm,
+                        color: secondaryTextColor,
+                        size: 16,
+                      ),
                       const SizedBox(width: 4),
                       Text(
-                        DateFormat('HH:mm dd/MM/yyyy').format(note.reminderDate!),
+                        DateFormat(
+                          'HH:mm dd/MM/yyyy',
+                        ).format(note.reminderDate!),
                         style: const TextStyle(
                           color: secondaryTextColor,
                           fontWeight: FontWeight.w500,
@@ -102,7 +109,12 @@ class _NotesListPageState extends State<NotesListPage> {
             ],
           ),
         ),
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => NotesPage(note: note)),
+          );
+        },
         onLongPress: () {
           if (note.key != null) {
             _showDeleteConfirmationDialog(note.key!);
@@ -114,7 +126,12 @@ class _NotesListPageState extends State<NotesListPage> {
 
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(top: 16.0, bottom: 8.0, left: 4.0, right: 4.0),
+      padding: const EdgeInsets.only(
+        top: 16.0,
+        bottom: 8.0,
+        left: 4.0,
+        right: 4.0,
+      ),
       child: Text(
         title,
         style: const TextStyle(
@@ -125,7 +142,6 @@ class _NotesListPageState extends State<NotesListPage> {
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -161,30 +177,49 @@ class _NotesListPageState extends State<NotesListPage> {
             );
           }
 
+          final List<Note> todayNotes = [];
           final List<Note> upcomingNotes = [];
           final List<Note> pastNotes = [];
           final now = DateTime.now();
+          final startOfToday = DateTime(now.year, now.month, now.day);
 
-          final notesMap = Map<String, dynamic>.from(snapshot.data!.snapshot.value as Map);
+          final notesMap = Map<String, dynamic>.from(
+            snapshot.data!.snapshot.value as Map,
+          );
           notesMap.forEach((key, value) {
             final noteData = Map<String, dynamic>.from(value);
             final note = Note(
               key: key,
               title: noteData['title'] ?? 'Không có tiêu đề',
               content: noteData['content'] ?? '',
-              reminderDate: noteData['reminderDate'] != null
-                  ? DateTime.tryParse(noteData['reminderDate'])
-                  : null,
+              reminderDate:
+                  noteData['reminderDate'] != null
+                      ? DateTime.tryParse(noteData['reminderDate'])
+                      : null,
             );
 
-            if (note.reminderDate != null && note.reminderDate!.isAfter(now)) {
-              upcomingNotes.add(note);
+            if (note.reminderDate != null) {
+              final reminderDay = DateTime(
+                note.reminderDate!.year,
+                note.reminderDate!.month,
+                note.reminderDate!.day,
+              );
+              if (reminderDay.isAtSameMomentAs(startOfToday)) {
+                todayNotes.add(note);
+              } else if (note.reminderDate!.isAfter(now)) {
+                upcomingNotes.add(note);
+              } else {
+                pastNotes.add(note);
+              }
             } else {
               pastNotes.add(note);
             }
           });
 
-          upcomingNotes.sort((a, b) => a.reminderDate!.compareTo(b.reminderDate!));
+          todayNotes.sort((a, b) => a.reminderDate!.compareTo(b.reminderDate!));
+          upcomingNotes.sort(
+            (a, b) => a.reminderDate!.compareTo(b.reminderDate!),
+          );
           pastNotes.sort((a, b) {
             if (a.reminderDate == null && b.reminderDate == null) return 0;
             if (a.reminderDate == null) return 1;
@@ -192,17 +227,18 @@ class _NotesListPageState extends State<NotesListPage> {
             return b.reminderDate!.compareTo(a.reminderDate!);
           });
 
-
           return SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (todayNotes.isNotEmpty)
+                  _buildSectionTitle('Ghi chú trong ngày'),
+                ...todayNotes.map((note) => _buildNoteItem(note)),
                 if (upcomingNotes.isNotEmpty)
                   _buildSectionTitle('Ghi chú sắp tới'),
                 ...upcomingNotes.map((note) => _buildNoteItem(note)),
-                if (pastNotes.isNotEmpty)
-                  _buildSectionTitle('Ghi chú đã qua'),
+                if (pastNotes.isNotEmpty) _buildSectionTitle('Ghi chú đã qua'),
                 ...pastNotes.map((note) => _buildNoteItem(note)),
               ],
             ),

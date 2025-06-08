@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:livestockmanagement/Screens/login_page.dart'; // Import trang đăng nhập
 
 class LivestockSignUpPage extends StatelessWidget {
   const LivestockSignUpPage({super.key});
@@ -23,7 +22,12 @@ class LivestockSignUpPage extends StatelessWidget {
               Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 16.0, bottom: 8.0, left: 16.0, right: 16.0),
+                    padding: const EdgeInsets.only(
+                      top: 16.0,
+                      bottom: 8.0,
+                      left: 16.0,
+                      right: 16.0,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -44,10 +48,13 @@ class LivestockSignUpPage extends StatelessWidget {
                   ),
 
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12.0,
+                    ),
                     child: Container(
                       width: double.infinity,
-                      height: 180.0, // Giảm chiều cao để có không gian cho trường mới
+                      height: 180.0,
                       decoration: BoxDecoration(
                         color: bgColor,
                         borderRadius: BorderRadius.circular(12.0),
@@ -61,7 +68,12 @@ class LivestockSignUpPage extends StatelessWidget {
                   ),
 
                   Padding(
-                    padding: const EdgeInsets.only(top: 20.0, bottom: 12.0, left: 16.0, right: 16.0),
+                    padding: const EdgeInsets.only(
+                      top: 20.0,
+                      bottom: 12.0,
+                      left: 16.0,
+                      right: 16.0,
+                    ),
                     child: Text(
                       'Tạo tài khoản',
                       textAlign: TextAlign.center,
@@ -74,15 +86,20 @@ class LivestockSignUpPage extends StatelessWidget {
                     ),
                   ),
 
-                  // Trường nhập tài khoản
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12.0,
+                    ),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 480),
                       child: TextField(
                         decoration: InputDecoration(
                           hintText: 'Tài khoản',
-                          hintStyle: const TextStyle(color: secondaryTextColor, fontSize: 16.0),
+                          hintStyle: const TextStyle(
+                            color: secondaryTextColor,
+                            fontSize: 16.0,
+                          ),
                           filled: true,
                           fillColor: inputBgColor,
                           border: OutlineInputBorder(
@@ -102,16 +119,21 @@ class LivestockSignUpPage extends StatelessWidget {
                     ),
                   ),
 
-                  // Trường nhập mật khẩu
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12.0,
+                    ),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 480),
                       child: TextField(
                         obscureText: true,
                         decoration: InputDecoration(
                           hintText: 'Mật khẩu',
-                          hintStyle: const TextStyle(color: secondaryTextColor, fontSize: 16.0),
+                          hintStyle: const TextStyle(
+                            color: secondaryTextColor,
+                            fontSize: 16.0,
+                          ),
                           filled: true,
                           fillColor: inputBgColor,
                           border: OutlineInputBorder(
@@ -131,16 +153,21 @@ class LivestockSignUpPage extends StatelessWidget {
                     ),
                   ),
 
-                  // Trường xác nhận mật khẩu
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12.0,
+                    ),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 480),
                       child: TextField(
                         obscureText: true,
                         decoration: InputDecoration(
                           hintText: 'Xác nhận mật khẩu',
-                          hintStyle: const TextStyle(color: secondaryTextColor, fontSize: 16.0),
+                          hintStyle: const TextStyle(
+                            color: secondaryTextColor,
+                            fontSize: 16.0,
+                          ),
                           filled: true,
                           fillColor: inputBgColor,
                           border: OutlineInputBorder(
@@ -160,9 +187,11 @@ class LivestockSignUpPage extends StatelessWidget {
                     ),
                   ),
 
-                  // Nút đăng ký
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 24.0,
+                    ),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 480),
                       child: ElevatedButton(
@@ -176,7 +205,7 @@ class LivestockSignUpPage extends StatelessWidget {
                           elevation: 0,
                         ),
                         onPressed: () {
-                          // Xử lý logic đăng ký
+                          Navigator.pop(context);
                         },
                         child: SizedBox(
                           width: double.infinity,
@@ -200,14 +229,12 @@ class LivestockSignUpPage extends StatelessWidget {
                 ],
               ),
 
-              // Liên kết quay lại trang đăng nhập
               Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(top: 4.0, bottom: 12.0),
                     child: InkWell(
                       onTap: () {
-                        // Quay lại trang đăng nhập
                         Navigator.pop(context);
                       },
                       child: Text(
@@ -221,10 +248,7 @@ class LivestockSignUpPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Container(
-                    height: 20.0,
-                    color: bgColor,
-                  ),
+                  Container(height: 20.0, color: bgColor),
                 ],
               ),
             ],

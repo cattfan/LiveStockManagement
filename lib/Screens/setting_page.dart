@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -12,9 +13,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool isNotificationEnabled = true;
   bool isEditing = false;
 
-  final TextEditingController nameController = TextEditingController(text: 'Nguyễn Văn A');
-  final TextEditingController emailController = TextEditingController(text: 'email@example.com');
-  final TextEditingController phoneController = TextEditingController(text: '0123 456 789');
+  final TextEditingController nameController = TextEditingController(
+    text: 'Nguyễn Văn A',
+  );
+  final TextEditingController emailController = TextEditingController(
+    text: 'email@example.com',
+  );
+  final TextEditingController phoneController = TextEditingController(
+    text: '0123 456 789',
+  );
+
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+    // AuthWrapper sẽ tự động xử lý điều hướng
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,16 +55,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icon(isEditing ? Icons.save : Icons.edit),
                 onPressed: () {
                   if (isEditing) {
-                    // Lưu thông tin thay đổi nếu cần thiết
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Đã lưu thông tin người dùng')),
+                      const SnackBar(
+                        content: Text('Đã lưu thông tin người dùng'),
+                      ),
                     );
                   }
                   setState(() {
                     isEditing = !isEditing;
                   });
                 },
-              )
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -119,8 +132,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const Divider(),
           ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Đăng xuất'),
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),
             onTap: () => _confirmLogout(context),
           ),
         ],
@@ -131,64 +144,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Xác nhận đăng xuất'),
-        content: const Text('Bạn có muốn đăng xuất hay không?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Không'),
+      builder:
+          (_) => AlertDialog(
+            title: const Text('Xác nhận đăng xuất'),
+            content: const Text('Bạn có muốn đăng xuất hay không?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Không'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // Đóng dialog xác nhận
+                  _signOut();
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Có', style: TextStyle(color: Colors.white)),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showLoginDialog(context);
-            },
-            child: const Text('Có'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showLoginDialog(BuildContext context) {
-    final TextEditingController loginUserController = TextEditingController();
-    final TextEditingController loginPassController = TextEditingController();
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => Scaffold(
-          appBar: AppBar(title: const Text('Đăng nhập lại')),
-          body: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextField(
-                  controller: loginUserController,
-                  decoration: const InputDecoration(labelText: 'Tên đăng nhập'),
-                ),
-                TextField(
-                  controller: loginPassController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Mật khẩu'),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Quay lại trang cài đặt
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Đăng nhập thành công')),
-                    );
-                  },
-                  child: const Text('Đăng nhập'),
-                )
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

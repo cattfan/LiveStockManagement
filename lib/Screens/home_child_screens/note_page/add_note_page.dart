@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:livestockmanagement/models/note_model.dart';
 
 class NotesPage extends StatefulWidget {
-  const NotesPage({super.key});
+  final Note? note;
+  const NotesPage({super.key, this.note});
 
   @override
   State<NotesPage> createState() => _NotesPageState();
@@ -21,6 +23,19 @@ class _NotesPageState extends State<NotesPage> {
   static const Color inputBgColor = Color(0xFFe7f3e7);
   static const Color pageBgColor = Color(0xFFf8fcf8);
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.note != null) {
+      _titleController.text = widget.note!.title;
+      _notesController.text = widget.note!.content;
+      if (widget.note!.reminderDate != null) {
+        _selectedDateTime = widget.note!.reminderDate;
+        _reminderController.text = _selectedDateTime.toString();
+      }
+    }
+  }
+
   Future<void> _selectDateTime(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -32,7 +47,9 @@ class _NotesPageState extends State<NotesPage> {
     if (pickedDate != null) {
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
-        initialTime: TimeOfDay.fromDateTime(_selectedDateTime ?? DateTime.now()),
+        initialTime: TimeOfDay.fromDateTime(
+          _selectedDateTime ?? DateTime.now(),
+        ),
       );
 
       if (pickedTime != null) {
@@ -56,21 +73,79 @@ class _NotesPageState extends State<NotesPage> {
     final String? reminder = _selectedDateTime?.toIso8601String();
 
     if (title.isNotEmpty || notes.isNotEmpty) {
-      _notesRef.push().set({
+      final noteData = {
         'title': title,
         'content': notes,
         'reminderDate': reminder,
-      }).then((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đã lưu ghi chú thành công!')),
-        );
-        Navigator.pop(context);
-      }).catchError((error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lưu thất bại: $error')),
-        );
-      });
+      };
+
+      if (widget.note != null) {
+        _notesRef
+            .child(widget.note!.key!)
+            .update(noteData)
+            .then((_) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Đã cập nhật ghi chú!')),
+              );
+              Navigator.pop(context);
+            })
+            .catchError((error) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Cập nhật thất bại: $error')),
+              );
+            });
+      } else {
+        _notesRef
+            .push()
+            .set(noteData)
+            .then((_) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Đã lưu ghi chú thành công!')),
+              );
+              Navigator.pop(context);
+            })
+            .catchError((error) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('Lưu thất bại: $error')));
+            });
+      }
     }
+  }
+
+  void _deleteNote() {
+    if (widget.note == null || widget.note!.key == null) return;
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Xác nhận xóa'),
+            content: const Text('Bạn có chắc muốn xóa ghi chú này?'),
+            actions: [
+              TextButton(
+                child: const Text('Hủy'),
+                onPressed: () => Navigator.pop(context),
+              ),
+              TextButton(
+                child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+                onPressed: () {
+                  _notesRef
+                      .child(widget.note!.key!)
+                      .remove()
+                      .then((_) {
+                        Navigator.of(context).pop(); // close dialog
+                        Navigator.of(context).pop(); // go back from edit page
+                      })
+                      .catchError((error) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Xóa thất bại: $error')),
+                        );
+                      });
+                },
+              ),
+            ],
+          ),
+    );
   }
 
   @override
@@ -95,13 +170,22 @@ class _NotesPageState extends State<NotesPage> {
                 children: [
                   Container(
                     color: pageBgColor,
-                    padding: const EdgeInsets.only(top:4.0, right: 4.0, left: 4.0, bottom: 2.0),
+                    padding: const EdgeInsets.only(
+                      top: 4.0,
+                      right: 4.0,
+                      left: 4.0,
+                      bottom: 2.0,
+                    ),
                     child: SafeArea(
                       bottom: false,
                       child: Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.arrow_back, color: primaryTextColor, size: 24),
+                            icon: const Icon(
+                              Icons.arrow_back,
+                              color: primaryTextColor,
+                              size: 24,
+                            ),
                             onPressed: () {
                               if (Navigator.canPop(context)) {
                                 Navigator.pop(context);
@@ -109,13 +193,18 @@ class _NotesPageState extends State<NotesPage> {
                             },
                             iconSize: 24,
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                            constraints: const BoxConstraints(
+                              minWidth: 48,
+                              minHeight: 48,
+                            ),
                           ),
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              'Thêm ghi chú',
+                              widget.note == null
+                                  ? 'Thêm ghi chú'
+                                  : 'Sửa ghi chú',
                               textAlign: TextAlign.center,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: primaryTextColor,
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -123,13 +212,25 @@ class _NotesPageState extends State<NotesPage> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 48),
+                          if (widget.note != null)
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                              ),
+                              onPressed: _deleteNote,
+                            )
+                          else
+                            const SizedBox(width: 48),
                         ],
                       ),
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12.0,
+                    ),
                     child: TextField(
                       controller: _titleController,
                       style: const TextStyle(
@@ -158,7 +259,10 @@ class _NotesPageState extends State<NotesPage> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12.0,
+                    ),
                     child: TextField(
                       controller: _notesController,
                       style: const TextStyle(
@@ -188,7 +292,12 @@ class _NotesPageState extends State<NotesPage> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 8.0),
+                    padding: const EdgeInsets.only(
+                      left: 16.0,
+                      right: 16.0,
+                      top: 16.0,
+                      bottom: 8.0,
+                    ),
                     child: Text(
                       'Nhắc nhở',
                       style: TextStyle(
@@ -200,7 +309,10 @@ class _NotesPageState extends State<NotesPage> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12.0,
+                    ),
                     child: GestureDetector(
                       onTap: () => _selectDateTime(context),
                       child: AbsorbPointer(
@@ -213,35 +325,40 @@ class _NotesPageState extends State<NotesPage> {
                             fontWeight: FontWeight.normal,
                           ),
                           decoration: InputDecoration(
-                              hintText: 'Cài đặt ngày giờ',
-                              hintStyle: const TextStyle(
+                            hintText: 'Cài đặt ngày giờ',
+                            hintStyle: const TextStyle(
+                              color: secondaryTextColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.normal,
+                            ),
+                            filled: true,
+                            fillColor: inputBgColor,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.fromLTRB(
+                              16,
+                              16,
+                              12,
+                              16,
+                            ),
+                            isDense: true,
+                            suffixIcon: Container(
+                              decoration: const BoxDecoration(
+                                color: inputBgColor,
+                                borderRadius: BorderRadius.only(
+                                  topRight: Radius.circular(12.0),
+                                  bottomRight: Radius.circular(12.0),
+                                ),
+                              ),
+                              padding: const EdgeInsets.only(right: 16.0),
+                              child: const Icon(
+                                Icons.calendar_today,
                                 color: secondaryTextColor,
-                                fontSize: 16,
-                                fontWeight: FontWeight.normal,
+                                size: 24,
                               ),
-                              filled: true,
-                              fillColor: inputBgColor,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
-                              isDense: true,
-                              suffixIcon: Container(
-                                decoration: const BoxDecoration(
-                                  color: inputBgColor,
-                                  borderRadius: BorderRadius.only(
-                                    topRight: Radius.circular(12.0),
-                                    bottomRight: Radius.circular(12.0),
-                                  ),
-                                ),
-                                padding: const EdgeInsets.only(right: 16.0),
-                                child: const Icon(
-                                  Icons.calendar_today,
-                                  color: secondaryTextColor,
-                                  size: 24,
-                                ),
-                              )
+                            ),
                           ),
                         ),
                       ),
@@ -255,7 +372,10 @@ class _NotesPageState extends State<NotesPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 12.0,
+                ),
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: secondaryTextColor,
@@ -278,12 +398,9 @@ class _NotesPageState extends State<NotesPage> {
                   ),
                 ),
               ),
-              Container(
-                height: 20,
-                color: pageBgColor,
-              ),
+              Container(height: 20, color: pageBgColor),
             ],
-          )
+          ),
         ],
       ),
     );
