@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:livestockmanagement/Screens/signup_page.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/auth_page/signup_page.dart';
 
 class LivestockLoginPage extends StatefulWidget {
   const LivestockLoginPage({super.key});
