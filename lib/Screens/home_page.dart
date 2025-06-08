@@ -1,7 +1,7 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:intl/intl.dart';
+import 'package:livestockmanagement/models/note_model.dart';
 import 'package:livestockmanagement/widgets/feature_card.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/vaccination_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/storage_management_page.dart';
@@ -9,7 +9,7 @@ import 'package:livestockmanagement/Screens/home_child_screens/feed_management_p
 import 'package:livestockmanagement/Screens/home_child_screens/Barn_Page/barn_management_page.dart';
 import 'home_child_screens/livestock_management/livestock_management_page.dart';
 import 'livestock_page.dart';
-import 'package:livestockmanagement/Screens/note_page.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/note_page/note_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,46 +21,121 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _totalLivestock = 0;
   bool _isLoading = true;
+  int _noteCount = 0;
+  List<Note> _todayNotes = [];
 
   @override
   void initState() {
     super.initState();
     _fetchTotalLivestock();
+    _fetchNoteCount();
+    _fetchTodayNotes();
+  }
+
+  void _fetchTodayNotes() {
+    DatabaseReference notesRef = FirebaseDatabase.instance.ref('notes');
+    notesRef.onValue.listen((DatabaseEvent event) {
+      final snapshot = event.snapshot;
+      if (snapshot.exists && mounted) {
+        final notesMap = Map<String, dynamic>.from(snapshot.value as Map);
+        final List<Note> loadedNotes = [];
+        final today = DateTime.now();
+
+        notesMap.forEach((key, value) {
+          final noteData = Map<String, dynamic>.from(value);
+          final reminderDateStr = noteData['reminderDate'];
+          if (reminderDateStr != null) {
+            final reminderDate = DateTime.tryParse(reminderDateStr);
+            if (reminderDate != null &&
+                reminderDate.year == today.year &&
+                reminderDate.month == today.month &&
+                reminderDate.day == today.day) {
+              loadedNotes.add(
+                Note(
+                  key: key,
+                  title: noteData['title'] ?? 'Không có tiêu đề',
+                  content: noteData['content'] ?? '',
+                  reminderDate: reminderDate,
+                ),
+              );
+            }
+          }
+        });
+
+        loadedNotes.sort((a, b) => a.reminderDate!.compareTo(b.reminderDate!));
+
+        setState(() {
+          _todayNotes = loadedNotes;
+        });
+      }
+    }, onError: (error) {});
   }
 
   void _fetchTotalLivestock() {
     DatabaseReference vatnuoiRef = FirebaseDatabase.instance.ref('Vatnuoi');
-    vatnuoiRef.onValue.listen((DatabaseEvent event) {
-      if (event.snapshot.exists) {
-        final data = event.snapshot.value as Map<dynamic, dynamic>;
-        int sum = 0;
-        data.forEach((key, value) {
-          final animalData = value as Map<dynamic, dynamic>;
-          // Chuyển đổi Soluong sang int, nếu không phải số thì coi như là 0
-          final quantity = int.tryParse(animalData['Soluong'].toString()) ?? 0;
-          sum += quantity;
-        });
+    vatnuoiRef.onValue.listen(
+      (DatabaseEvent event) {
+        if (event.snapshot.exists) {
+          final data = event.snapshot.value as Map<dynamic, dynamic>;
+          int sum = 0;
+          data.forEach((key, value) {
+            final animalData = value as Map<dynamic, dynamic>;
+            final quantity =
+                int.tryParse(animalData['Soluong'].toString()) ?? 0;
+            sum += quantity;
+          });
+
+          if (mounted) {
+            setState(() {
+              _totalLivestock = sum;
+              _isLoading = false;
+            });
+          }
+        } else {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
+        }
+      },
+      onError: (error) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      },
+    );
+  }
+
+  void _fetchNoteCount() {
+    DatabaseReference notesRef = FirebaseDatabase.instance.ref('notes');
+    notesRef.onValue.listen((DatabaseEvent event) {
+      final snapshot = event.snapshot;
+
+      if (snapshot.exists) {
+        final value = snapshot.value;
+
+        int count = 0;
+
+        if (value is Map) {
+          count = value.length;
+        }
 
         if (mounted) {
           setState(() {
-            _totalLivestock = sum;
-            _isLoading = false;
+            _noteCount = count;
           });
         }
       } else {
         if (mounted) {
           setState(() {
-            _isLoading = false;
+            _noteCount = 0;
           });
         }
       }
-    }, onError: (error) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    });
+    }, onError: (error) {});
   }
 
   @override
@@ -79,7 +154,12 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Container(
                     color: Colors.green[600],
-                    padding: const EdgeInsets.only(top: 16.0, bottom: 80.0, left: 16.0, right: 16.0),
+                    padding: const EdgeInsets.only(
+                      top: 16.0,
+                      bottom: 80.0,
+                      left: 16.0,
+                      right: 16.0,
+                    ),
                     child: Column(
                       children: [
                         SafeArea(
@@ -97,37 +177,6 @@ class _HomePageState extends State<HomePage> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Stack(
-                                    alignment: Alignment.topRight,
-                                    children: [
-                                      const Icon(Icons.notifications_outlined, color: Colors.white, size: 28),
-                                      Container(
-                                        padding: const EdgeInsets.all(2),
-                                        decoration: BoxDecoration(
-                                          color: Colors.red[500],
-                                          shape: BoxShape.circle,
-                                        ),
-                                        constraints: const BoxConstraints(
-                                          minWidth: 16,
-                                          minHeight: 16,
-                                        ),
-                                        child: const Text(
-                                          '3',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 10,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(width: 16),
-                                  const Icon(Icons.menu, color: Colors.white, size: 28),
                                 ],
                               ),
                             ],
@@ -157,9 +206,13 @@ class _HomePageState extends State<HomePage> {
                       child: Row(
                         children: [
                           CircleAvatar(
-                              radius: 32,
-                              backgroundColor: Colors.green[500],
-                              child: const Icon(Icons.person, size: 32, color: Colors.white70)
+                            radius: 32,
+                            backgroundColor: Colors.green[500],
+                            child: const Icon(
+                              Icons.person,
+                              size: 32,
+                              color: Colors.white70,
+                            ),
                           ),
                           const SizedBox(width: 16),
                           Column(
@@ -173,13 +226,6 @@ class _HomePageState extends State<HomePage> {
                                   color: Colors.grey[800],
                                 ),
                               ),
-                              Text(
-                                'Trang trại ABC',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
                             ],
                           ),
                         ],
@@ -190,11 +236,17 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             SliverPadding(
-              padding: const EdgeInsets.only(top: 22.0, left: 16.0, right: 16.0, bottom: 16.0),
+              padding: const EdgeInsets.only(
+                top: 22.0,
+                left: 16.0,
+                right: 16.0,
+                bottom: 16.0,
+              ),
               sliver: SliverList(
-                delegate: SliverChildListDelegate(
-                  [
-                    Text(
+                delegate: SliverChildListDelegate([
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Text(
                       'Chức năng chính',
                       style: TextStyle(
                         fontSize: 18,
@@ -202,87 +254,108 @@ class _HomePageState extends State<HomePage> {
                         color: Colors.grey[700],
                       ),
                     ),
-                    GridView.count(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: [
-                        FeatureCard(icon: Icons.savings_outlined,
-                            label: 'Quản lý Vật nuôi',
-                            iconColor: const Color(0xFF34D399),
-                            bgColor: const Color(0xFFD1FAE5),
-                          onTap: () { // Thêm hàm onTap
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const
-                              LivestockManagementPage()),
-                            );
-                          },
-                        ),
-
-                        FeatureCard(icon: Icons.home_work_outlined,
-                          label: 'Quản lý Chuồng trại',
-                          iconColor: const Color(0xFF34D399),
-                          bgColor: const Color(0xFFD1FAE5),
-                          onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                            const BarnManagementPage())
-                            );
-                          },
-                        ),
-                        FeatureCard(icon: Icons.grass_outlined,
-                          label: 'Quản lý Thức ăn',
-                          iconColor: const Color(0xFF34D399),
-                          bgColor: const Color(0xFFD1FAE5),
-                          onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                            const FeedManagementPage())
-                            );
-                          },
-                        ),
-                        FeatureCard(icon: Icons.vaccines_outlined,
-                          label: 'Lịch tiêm chủng',
-                          iconColor: const Color(0xFF34D399),
-                          bgColor: const Color(0xFFD1FAE5),
-                          onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                            const VaccinationPage())
-                            );
-                          },
-                        ),
-                        FeatureCard(icon: Icons.inventory_2_outlined,
-                          label: 'Quản lý Kho',
-                          iconColor: const Color(0xFF34D399),
-                          bgColor: const Color(0xFFD1FAE5),
-                          onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                            const StorageManagementPage())
-                            );
-                          },
-                        ),
-                        FeatureCard(
-                          icon: Icons.receipt_long_outlined,
-                          label: 'Ghi chú',
-                          iconColor: const Color(0xFF34D399),
-                          bgColor: const Color(0xFFD1FAE5),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const NotesListPage()),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    _buildFarmOverviewCard(),
-                    const SizedBox(height: 24),
-                    _buildTodayTasksCard(),
-                    const SizedBox(height: 80),
-                  ],
-                ),
+                  ),
+                  GridView.count(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      FeatureCard(
+                        icon: Icons.savings_outlined,
+                        label: 'Quản lý Vật nuôi',
+                        iconColor: const Color(0xFF34D399),
+                        bgColor: const Color(0xFFD1FAE5),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => const LivestockManagementPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      FeatureCard(
+                        icon: Icons.home_work_outlined,
+                        label: 'Quản lý Chuồng trại',
+                        iconColor: const Color(0xFF34D399),
+                        bgColor: const Color(0xFFD1FAE5),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const BarnManagementPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      FeatureCard(
+                        icon: Icons.grass_outlined,
+                        label: 'Quản lý Thức ăn',
+                        iconColor: const Color(0xFF34D399),
+                        bgColor: const Color(0xFFD1FAE5),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const FeedManagementPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      FeatureCard(
+                        icon: Icons.vaccines_outlined,
+                        label: 'Lịch tiêm chủng',
+                        iconColor: const Color(0xFF34D399),
+                        bgColor: const Color(0xFFD1FAE5),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const VaccinationPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      FeatureCard(
+                        icon: Icons.inventory_2_outlined,
+                        label: 'Quản lý Kho',
+                        iconColor: const Color(0xFF34D399),
+                        bgColor: const Color(0xFFD1FAE5),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => const StorageManagementPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      FeatureCard(
+                        icon: Icons.receipt_long_outlined,
+                        label: 'Ghi chú',
+                        iconColor: const Color(0xFF34D399),
+                        bgColor: const Color(0xFFD1FAE5),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NotesListPage(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildFarmOverviewCard(),
+                  const SizedBox(height: 24),
+                  _buildTodayTasksCard(),
+                  const SizedBox(height: 80),
+                ]),
               ),
             ),
           ],
@@ -317,16 +390,6 @@ class _HomePageState extends State<HomePage> {
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.grey[700],
-                ),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  'Xem chi tiết',
-                  style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.green[600],
-                      fontWeight: FontWeight.w500),
                 ),
               ),
             ],
@@ -372,11 +435,11 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Cần chú ý',
+                        'Tổng số ghi chú',
                         style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                       ),
                       Text(
-                        '15',
+                        _isLoading ? 'Đang tải...' : _noteCount.toString(),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -396,7 +459,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildTodayTasksCard() {
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12.0),
@@ -411,28 +474,74 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Công việc hôm nay',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[700],
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20.0),
+            child: Text(
+              'Công việc hôm nay',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
             ),
           ),
-          const SizedBox(height: 12),
-          _buildTaskItem(Icons.local_drink, Colors.orange[500]!, 'Cho heo ăn (Lô A1)', '07:00 AM'),
-          const SizedBox(height: 8),
-          _buildTaskItem(Icons.cleaning_services, Colors.blue[500]!, 'Dọn dẹp chuồng gà', '09:00 AM'),
-          const SizedBox(height: 8),
-          _buildTaskItem(Icons.vaccines, Colors.purple[500]!, 'Tiêm phòng bò (Lô B2)', '02:00 PM'),
+          _todayNotes.isEmpty
+              ? Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 4.0,
+                  horizontal: 8.0,
+                ),
+                child: Center(
+                  child: Text(
+                    'Không có công việc nào cho hôm nay.',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                  ),
+                ),
+              )
+              : ListView.separated(
+                itemCount: _todayNotes.length,
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final note = _todayNotes[index];
+                  final time =
+                      note.reminderDate != null
+                          ? DateFormat('HH:mm a').format(note.reminderDate!)
+                          : '';
+                  return InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NotesListPage(),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: _buildTaskItem(
+                      Icons.receipt_long_outlined,
+                      Colors.blue[500]!,
+                      note.title,
+                      time,
+                    ),
+                  );
+                },
+                separatorBuilder: (context, index) => const SizedBox(height: 4),
+              ),
         ],
       ),
     );
   }
 
-  Widget _buildTaskItem(IconData icon, Color iconColor, String title, String time) {
+  Widget _buildTaskItem(
+    IconData icon,
+    Color iconColor,
+    String title,
+    String time,
+  ) {
     return Container(
-      padding: const EdgeInsets.all(10.0),
+      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
       decoration: BoxDecoration(
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(8.0),
@@ -440,20 +549,23 @@ class _HomePageState extends State<HomePage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Icon(icon, color: iconColor, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-              ),
-            ],
+          Expanded(
+            child: Row(
+              children: [
+                Icon(icon, color: iconColor, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
-          Text(
-            time,
-            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-          ),
+          const SizedBox(width: 8),
+          Text(time, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
         ],
       ),
     );
