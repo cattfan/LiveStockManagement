@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/livestock_management/livestock_model.dart';
@@ -13,21 +14,30 @@ class AddEditLivestockPage extends StatefulWidget {
 
 class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
   final _formKey = GlobalKey<FormState>();
-  // KHAI BÁO BIẾN ĐÃ ĐƯỢC CẬP NHẬT (không còn _loaiController)
   late TextEditingController _tenController;
   late TextEditingController _chuongController;
   late TextEditingController _soLuongController;
   late TextEditingController _thucAnController;
 
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref('quan_ly_chan_nuoi/vat_nuoi');
+  DatabaseReference? _dbRef;
 
   @override
   void initState() {
     super.initState();
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      _dbRef = FirebaseDatabase.instance.ref('app_data/$userId/vat_nuoi');
+    }
     _tenController = TextEditingController(text: widget.livestock?.ten ?? '');
-    _chuongController = TextEditingController(text: widget.livestock?.chuong ?? '');
-    _soLuongController = TextEditingController(text: widget.livestock?.soLuong.toString() ?? '');
-    _thucAnController = TextEditingController(text: widget.livestock?.thucAn ?? '');
+    _chuongController = TextEditingController(
+      text: widget.livestock?.chuong ?? '',
+    );
+    _soLuongController = TextEditingController(
+      text: widget.livestock?.soLuong.toString() ?? '',
+    );
+    _thucAnController = TextEditingController(
+      text: widget.livestock?.thucAn ?? '',
+    );
   }
 
   @override
@@ -41,6 +51,14 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
 
   Future<void> _saveLivestock() async {
     if (_formKey.currentState!.validate()) {
+      if (_dbRef == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Không thể lưu, người dùng chưa đăng nhập.'),
+          ),
+        );
+        return;
+      }
       final newLivestock = Livestock(
         id: widget.livestock?.id,
         ten: _tenController.text,
@@ -51,20 +69,34 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
 
       try {
         if (widget.livestock == null) {
-          await _dbRef.push().set(newLivestock.toJson());
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thêm vật nuôi thành công!')));
+          await _dbRef!.push().set(newLivestock.toJson());
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Thêm vật nuôi thành công!')),
+          );
         } else {
-          await _dbRef.child(newLivestock.id!).update(newLivestock.toJson());
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cập nhật thành công!')));
+          await _dbRef!.child(newLivestock.id!).update(newLivestock.toJson());
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Cập nhật thành công!')));
         }
-        Navigator.of(context).pop();
+        if (mounted) Navigator.of(context).pop();
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đã xảy ra lỗi: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Đã xảy ra lỗi: $e')));
       }
     }
   }
 
   Future<void> _deleteLivestock() async {
+    if (_dbRef == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể xóa, người dùng chưa đăng nhập.'),
+        ),
+      );
+      return;
+    }
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -87,15 +119,18 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
 
     if (confirmed == true && widget.livestock != null) {
       try {
-        await _dbRef.child(widget.livestock!.id!).remove();
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã xóa vật nuôi.')));
-        Navigator.of(context).pop();
+        await _dbRef!.child(widget.livestock!.id!).remove();
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Đã xóa vật nuôi.')));
+        if (mounted) Navigator.of(context).pop();
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi khi xóa: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi khi xóa: $e')));
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -107,14 +142,17 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
         elevation: 1,
         title: Text(
           widget.livestock == null ? 'Thêm Vật Nuôi' : 'Sửa Vật Nuôi',
-          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           if (widget.livestock != null)
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: _deleteLivestock,
-            )
+            ),
         ],
       ),
       body: Padding(
@@ -125,14 +163,19 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
             children: [
               TextFormField(
                 controller: _tenController,
-                decoration: const InputDecoration(labelText: 'Tên/Giống (VD: Bò sữa)'),
-                validator: (value) => value!.isEmpty ? 'Vui lòng nhập tên/giống' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Tên/Giống (VD: Bò sữa)',
+                ),
+                validator:
+                    (value) =>
+                        value!.isEmpty ? 'Vui lòng nhập tên/giống' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _chuongController,
                 decoration: const InputDecoration(labelText: 'Chuồng'),
-                validator: (value) => value!.isEmpty ? 'Vui lòng nhập chuồng' : null,
+                validator:
+                    (value) => value!.isEmpty ? 'Vui lòng nhập chuồng' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -140,8 +183,12 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
                 decoration: const InputDecoration(labelText: 'Số lượng'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Vui lòng nhập số lượng';
-                  if (int.tryParse(value) == null) return 'Vui lòng nhập một số hợp lệ';
+                  if (value == null || value.isEmpty) {
+                    return 'Vui lòng nhập số lượng';
+                  }
+                  if (int.tryParse(value) == null) {
+                    return 'Vui lòng nhập một số hợp lệ';
+                  }
                   return null;
                 },
               ),
@@ -149,7 +196,9 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
               TextFormField(
                 controller: _thucAnController,
                 decoration: const InputDecoration(labelText: 'Thức ăn'),
-                validator: (value) => value!.isEmpty ? 'Vui lòng nhập loại thức ăn' : null,
+                validator:
+                    (value) =>
+                        value!.isEmpty ? 'Vui lòng nhập loại thức ăn' : null,
               ),
               const SizedBox(height: 32),
               ElevatedButton(
@@ -158,7 +207,10 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
                   backgroundColor: Colors.green,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text('Lưu', style: TextStyle(color: Colors.white, fontSize: 16)),
+                child: const Text(
+                  'Lưu',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
               ),
             ],
           ),

@@ -13,19 +13,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool isNotificationEnabled = true;
   bool isEditing = false;
 
-  final TextEditingController nameController = TextEditingController(
-    text: 'Nguyễn Văn A',
-  );
-  final TextEditingController emailController = TextEditingController(
-    text: 'email@example.com',
-  );
-  final TextEditingController phoneController = TextEditingController(
-    text: '0123 456 789',
-  );
+  final User? currentUser = FirebaseAuth.instance.currentUser;
+
+  late final TextEditingController nameController;
+  late final TextEditingController emailController;
+  late final TextEditingController phoneController;
+
+  @override
+  void initState() {
+    super.initState();
+    nameController = TextEditingController(
+      text: currentUser?.displayName ?? 'Chưa có tên',
+    );
+    emailController = TextEditingController(
+      text: currentUser?.email ?? 'Không có email',
+    );
+    phoneController = TextEditingController(
+      text: currentUser?.phoneNumber ?? 'Chưa có SĐT',
+    );
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    super.dispose();
+  }
 
   Future<void> _signOut() async {
     await FirebaseAuth.instance.signOut();
-    // AuthWrapper sẽ tự động xử lý điều hướng
+  }
+
+  void _saveUserInfo() {
+    // Logic để lưu thông tin người dùng vào Firebase (ví dụ: Firestore hoặc Realtime DB)
+    // Ví dụ: currentUser?.updateDisplayName(nameController.text);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Đã lưu thông tin người dùng (demo)')),
+    );
+    setState(() {
+      isEditing = false;
+    });
   }
 
   @override
@@ -55,15 +83,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icon(isEditing ? Icons.save : Icons.edit),
                 onPressed: () {
                   if (isEditing) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Đã lưu thông tin người dùng'),
-                      ),
-                    );
+                    _saveUserInfo();
+                  } else {
+                    setState(() {
+                      isEditing = true;
+                    });
                   }
-                  setState(() {
-                    isEditing = !isEditing;
-                  });
                 },
               ),
             ],
@@ -84,7 +109,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               labelText: 'Email',
               prefixIcon: Icon(Icons.email),
             ),
-            enabled: isEditing,
+            enabled: false, // Email không nên cho sửa
           ),
           const SizedBox(height: 10),
           TextField(
@@ -155,7 +180,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context); // Đóng dialog xác nhận
+                  Navigator.pop(context);
                   _signOut();
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
