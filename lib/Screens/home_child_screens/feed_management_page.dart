@@ -187,9 +187,7 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
 
   Widget _buildFeedItemsList() {
     if (_feedItems.isEmpty) {
-      return const Center(
-        child: Text('Không có thức ăn nào. Nhấn nút + để thêm mới!'),
-      );
+      return const Center(child: Text('Chưa có thức ăn nào.'));
     }
     return ListView.builder(
       itemCount: _feedItems.length,
@@ -342,23 +340,7 @@ class _AddFeedItemPageState extends State<AddFeedItemPage> {
                   return null;
                 },
               ),
-              TextFormField(
-                controller: _expiryDateController,
-                decoration: InputDecoration(
-                  labelText: 'Ngày sản xuất (DD/MM/YYYY)',
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.calendar_today),
-                    onPressed: () => _selectDate(context),
-                  ),
-                ),
-                readOnly: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng chọn ngày sản xuất';
-                  }
-                  return null;
-                },
-              ),
+
               TextFormField(
                 controller: _weightController,
                 decoration: const InputDecoration(labelText: 'Khối lượng (Kg)'),
@@ -511,23 +493,7 @@ class _EditFeedItemPageState extends State<EditFeedItemPage> {
                   return null;
                 },
               ),
-              TextFormField(
-                controller: _expiryDateController,
-                decoration: InputDecoration(
-                  labelText: 'Ngày sản xuất (DD/MM/YYYY)',
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.calendar_today),
-                    onPressed: () => _selectDate(context),
-                  ),
-                ),
-                readOnly: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng chọn ngày sản xuất';
-                  }
-                  return null;
-                },
-              ),
+
               TextFormField(
                 controller: _weightController,
                 decoration: const InputDecoration(labelText: 'Khối lượng (Kg)'),

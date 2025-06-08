@@ -17,11 +17,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
   int _livestockCount = 0;
   int _poultryCount = 0;
   double _feedWeight = 0;
-  int _supplyCount = 0;
-  int _vaccineCount = 0;
-
-  final List<String> _livestockNames = ['bò', 'heo', 'dê', 'trâu', 'cừu'];
-  final List<String> _poultryNames = ['gà', 'vịt', 'ngan', 'ngỗng'];
+  int _supplyToolCount = 0;
+  int _medicineCount = 0;
 
   @override
   void initState() {
@@ -48,64 +45,58 @@ class _StatisticsPageState extends State<StatisticsPage> {
     }
 
     try {
-      // Fetch all data in parallel
       final results = await Future.wait([
         _userRef!.child('vat_nuoi').get(),
         _userRef!.child('thuc_an').get(),
         _userRef!.child('dung_cu').get(),
-        // Add other data fetches here, e.g., for vaccines if you create a separate node
       ]);
 
-      // Process Livestock and Poultry
       final livestockSnapshot = results[0];
       int tempLivestock = 0;
       int tempPoultry = 0;
       if (livestockSnapshot.exists && livestockSnapshot.value is Map) {
-        final data = livestockSnapshot.value as Map;
+        final data = Map<String, dynamic>.from(livestockSnapshot.value as Map);
         data.forEach((key, value) {
           final animalData = value as Map;
-          final name = (animalData['ten'] as String? ?? '').toLowerCase();
+          final type = (animalData['loai'] as String? ?? '').toLowerCase();
           final quantity =
               int.tryParse(animalData['soLuong']?.toString() ?? '0') ?? 0;
 
-          if (_livestockNames.any((element) => name.contains(element))) {
+          if (type == 'gia súc') {
             tempLivestock += quantity;
-          } else if (_poultryNames.any((element) => name.contains(element))) {
+          } else if (type == 'gia cầm') {
             tempPoultry += quantity;
           }
         });
       }
 
-      // Process Feed
       final feedSnapshot = results[1];
       double tempFeed = 0;
       if (feedSnapshot.exists && feedSnapshot.value is Map) {
-        final data = feedSnapshot.value as Map;
+        final data = Map<String, dynamic>.from(feedSnapshot.value as Map);
         data.forEach((key, value) {
           final feedData = value as Map;
-          final weightString = (feedData['khoiluong'] as String? ?? '0')
+          final weightString = (feedData['khoi_luong'] as String? ?? '0')
               .replaceAll(RegExp(r'[^0-9.]'), '');
           tempFeed += double.tryParse(weightString) ?? 0.0;
         });
       }
 
-      // Process Supplies
       final supplySnapshot = results[2];
-      int tempSupply = 0;
-      int tempVaccine = 0; // Separate counter for vaccines
+      int tempSupplyTool = 0;
+      int tempMedicine = 0;
       if (supplySnapshot.exists && supplySnapshot.value is Map) {
-        final data = supplySnapshot.value as Map;
+        final data = Map<String, dynamic>.from(supplySnapshot.value as Map);
         data.forEach((key, value) {
           final supplyData = value as Map;
-          final type = (supplyData['Loai'] as String? ?? '').toLowerCase();
+          final type = (supplyData['loai'] as String? ?? '').toLowerCase();
           final quantity =
-              int.tryParse(supplyData['SoLuong']?.toString() ?? '0') ?? 0;
+              int.tryParse(supplyData['so_luong']?.toString() ?? '0') ?? 0;
 
           if (type.contains('thuốc')) {
-            tempVaccine +=
-                quantity; // Assuming 'thuốc' can be counted as vaccine for now
+            tempMedicine += quantity;
           } else if (type.contains('dụng cụ') || type.contains('vật tư')) {
-            tempSupply += quantity;
+            tempSupplyTool += quantity;
           }
         });
       }
@@ -115,8 +106,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
           _livestockCount = tempLivestock;
           _poultryCount = tempPoultry;
           _feedWeight = tempFeed;
-          _supplyCount = tempSupply;
-          _vaccineCount = tempVaccine;
+          _supplyToolCount = tempSupplyTool;
+          _medicineCount = tempMedicine;
           _isLoading = false;
         });
       }
@@ -143,10 +134,13 @@ class _StatisticsPageState extends State<StatisticsPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F5EE),
       appBar: AppBar(
+        // XÓA: Dòng `automaticallyImplyLeading: false` đã bị xóa.
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text('Thống kê', style: TextStyle(color: Colors.black)),
         centerTitle: true,
+        // THÊM: Đảm bảo nút quay lại tự động có màu đen
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.black),
@@ -161,69 +155,67 @@ class _StatisticsPageState extends State<StatisticsPage> {
               ? const Center(child: Text('Vui lòng đăng nhập.'))
               : RefreshIndicator(
                 onRefresh: _fetchAllStatistics,
-                child: SingleChildScrollView(
+                child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      MyCustomListItem(
-                        svgIconString: piggyBankSvg,
-                        title: 'Gia súc',
-                        subtitle: '$_livestockCount con',
-                        iconBackgroundColor: const Color(0xFFEBF2E9),
-                        iconColor: const Color(0xFF111A0F),
-                        subtitleColor: const Color(0xFF629155),
+                  padding: const EdgeInsets.all(8.0),
+                  children: [
+                    MyCustomListItem(
+                      svgIconString: piggyBankSvg,
+                      title: 'Gia súc',
+                      subtitle: '$_livestockCount con',
+                      iconBackgroundColor: const Color(0xFFEBF2E9),
+                      iconColor: const Color(0xFF111A0F),
+                      subtitleColor: const Color(0xFF629155),
+                    ),
+                    MyCustomListItem(
+                      svgIconString: birdSvg,
+                      title: 'Gia Cầm',
+                      subtitle: '$_poultryCount con',
+                      iconBackgroundColor: const Color(0xFFEBF2E9),
+                      iconColor: const Color(0xFF111A0F),
+                      subtitleColor: const Color(0xFF629155),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 12,
                       ),
-                      MyCustomListItem(
-                        svgIconString: birdSvg,
-                        title: 'Gia Cầm',
-                        subtitle: '$_poultryCount con',
-                        iconBackgroundColor: const Color(0xFFEBF2E9),
-                        iconColor: const Color(0xFF111A0F),
-                        subtitleColor: const Color(0xFF629155),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        child: Text(
-                          'Thức ăn và vật tư',
-                          style: TextStyle(
-                            color: Color(0xFF111A0F),
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            height: 1.27,
-                            letterSpacing: -0.33,
-                          ),
+                      child: Text(
+                        'Thức ăn và vật tư',
+                        style: TextStyle(
+                          color: Color(0xFF111A0F),
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          height: 1.27,
+                          letterSpacing: -0.33,
                         ),
                       ),
-                      MyCustomListItem(
-                        iconData: Icons.grain,
-                        title: 'Thức ăn chăn nuôi',
-                        subtitle: '${_feedWeight.toStringAsFixed(2)} kg',
-                        iconBackgroundColor: const Color(0xFFEBF2E9),
-                        iconColor: const Color(0xFF111A0F),
-                        subtitleColor: const Color(0xFF629155),
-                      ),
-                      MyCustomListItem(
-                        iconData: Icons.construction,
-                        title: 'Vật tư & Dụng cụ',
-                        subtitle: '$_supplyCount cái',
-                        iconBackgroundColor: const Color(0xFFEBF2E9),
-                        iconColor: const Color(0xFF111A0F),
-                        subtitleColor: const Color(0xFF629155),
-                      ),
-                      MyCustomListItem(
-                        iconData: Icons.medical_services,
-                        title: 'Thuốc & Tiêm Chủng',
-                        subtitle: '$_vaccineCount liều/viên',
-                        iconBackgroundColor: const Color(0xFFEBF2E9),
-                        iconColor: const Color(0xFF111A0F),
-                        subtitleColor: const Color(0xFF629155),
-                      ),
-                    ],
-                  ),
+                    ),
+                    MyCustomListItem(
+                      iconData: Icons.grain,
+                      title: 'Thức ăn chăn nuôi',
+                      subtitle: '${_feedWeight.toStringAsFixed(2)} kg',
+                      iconBackgroundColor: const Color(0xFFEBF2E9),
+                      iconColor: const Color(0xFF111A0F),
+                      subtitleColor: const Color(0xFF629155),
+                    ),
+                    MyCustomListItem(
+                      iconData: Icons.construction,
+                      title: 'Vật tư & Dụng cụ',
+                      subtitle: '$_supplyToolCount cái/món',
+                      iconBackgroundColor: const Color(0xFFEBF2E9),
+                      iconColor: const Color(0xFF111A0F),
+                      subtitleColor: const Color(0xFF629155),
+                    ),
+                    MyCustomListItem(
+                      iconData: Icons.medical_services,
+                      title: 'Thuốc & Tiêm Chủng',
+                      subtitle: '$_medicineCount liều/viên',
+                      iconBackgroundColor: const Color(0xFFEBF2E9),
+                      iconColor: const Color(0xFF111A0F),
+                      subtitleColor: const Color(0xFF629155),
+                    ),
+                  ],
                 ),
               ),
     );
@@ -257,7 +249,7 @@ class MyCustomListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       constraints: const BoxConstraints(minHeight: 72),
       decoration: const BoxDecoration(color: Color(0xFFF9FBF9)),
       child: Row(

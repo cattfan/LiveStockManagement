@@ -65,7 +65,7 @@ class _BarnManagementPageState extends State<BarnManagementPage> {
                   final List<Barn> barnList = [];
 
                   data.forEach((key, value) {
-                    final barnData = value as Map;
+                    // Sử dụng factory constructor để đảm bảo dữ liệu được đọc đúng
                     barnList.add(
                       Barn.fromSnapshot(snapshot.data!.snapshot.child(key)),
                     );
@@ -87,6 +87,7 @@ class _BarnManagementPageState extends State<BarnManagementPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 4),
+                              // Hiển thị chính xác số lượng đã sử dụng
                               Text('Sức chứa: ${barn.used}/${barn.capacity}'),
                               if (barn.temp.isNotEmpty)
                                 Text('Nhiệt độ: ${barn.temp}'),

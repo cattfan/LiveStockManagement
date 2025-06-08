@@ -152,21 +152,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('Đổi mật khẩu'),
             onTap: () {},
           ),
-          ListTile(
-            leading: const Icon(Icons.language),
-            title: const Text('Ngôn ngữ'),
-            subtitle: const Text('Tiếng Việt'),
-            onTap: () {},
-          ),
-          SwitchListTile(
-            title: const Text('Chế độ tối'),
-            value: isDarkMode,
-            onChanged: (val) {
-              setState(() {
-                isDarkMode = val;
-              });
-            },
-          ),
+
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),

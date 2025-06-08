@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/livestock_management/livestock_management_page.dart';
 import 'package:livestockmanagement/Screens/statistics_page.dart';
 import 'package:livestockmanagement/widgets/bottom_nav.dart';
 import 'package:livestockmanagement/Screens/home_page.dart';
-import 'package:livestockmanagement/Screens/livestock_page.dart';
 import 'package:livestockmanagement/Screens/setting_page.dart';
 import 'package:livestockmanagement/Screens/login_page.dart';
 import 'package:livestockmanagement/Screens/getusername.dart';
@@ -43,7 +43,6 @@ class FarmApp extends StatelessWidget {
   }
 }
 
-// SỬA LỖI: Cập nhật AuthWrapper để kiểm tra displayName
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
@@ -59,16 +58,12 @@ class AuthWrapper extends StatelessWidget {
         }
         if (snapshot.hasData) {
           final user = snapshot.data;
-          // Kiểm tra nếu người dùng đã đăng nhập nhưng chưa có displayName
           if (user != null &&
               (user.displayName == null || user.displayName!.isEmpty)) {
-            // Chuyển đến trang nhập tên
             return const GetUsernamePage();
           }
-          // Nếu có displayName, vào trang chính
           return const HomeScreen();
         }
-        // Nếu chưa, hiển thị trang đăng nhập
         return const LivestockLoginPage();
       },
     );
@@ -83,25 +78,16 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _pages = [
-    const HomePage(),
-    const LivestockGridScreen(),
-    const StatisticsPage(),
-    const SettingsScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_currentIndex],
+      // Body chỉ là HomePage
+      body: const HomePage(),
+      // BottomNav sẽ xử lý việc điều hướng
       bottomNavigationBar: BottomNav(
-        currentIndex: _currentIndex,
+        currentIndex: 0, // Luôn ở tab Trang chủ
         onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          // Logic điều hướng sẽ được xử lý trong BottomNav
         },
       ),
     );
