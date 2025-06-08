@@ -1,144 +1,215 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
 
+// Giả định rằng bạn có một file livestock_model.dart định nghĩa LivestockDetailScreen
+// Nếu không, bạn có thể thêm class LivestockDetailScreen vào đây như trong code gốc.
 
-// Mô hình dữ liệu Livestock
 class Livestock {
-  final String name;
+  final String id;
+  final String ten;
+  final String chuong;
+  final int soLuong;
+  final String thucAn;
   final String imageUrl;
-  final String quantity;
-  final String vaccinationNote;
-  final String food;
-  final String cage;
 
   Livestock({
-    required this.name,
+    required this.id,
+    required this.ten,
+    required this.chuong,
+    required this.soLuong,
+    required this.thucAn,
     required this.imageUrl,
-    required this.quantity,
-    required this.vaccinationNote,
-    required this.food,
-    required this.cage,
   });
+
+  factory Livestock.fromMap(String id, Map<dynamic, dynamic> map, String imageUrl) {
+    return Livestock(
+      id: id,
+      ten: map['ten']?.toString() ?? 'Không có tên',
+      chuong: map['chuong']?.toString() ?? 'Không xác định',
+      soLuong: int.tryParse(map['soLuong']?.toString() ?? '0') ?? 0,
+      thucAn: map['thucAn']?.toString() ?? 'Không xác định',
+      imageUrl: imageUrl,
+    );
+  }
 }
 
-// Màn hình danh sách động vật
-class LivestockGridScreen extends StatelessWidget {
-  final List<Livestock> livestockList = [
-    Livestock(
-      name: 'Bò',
-      imageUrl: 'https://plus.unsplash.com/premium_photo-1661962510497-9505129083fa?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      quantity: '12',
-      vaccinationNote: 'Đã tiêm phòng tháng 5',
-      food: 'Cỏ, cám',
-      cage: 'Chuồng A1',
-    ),
-    Livestock(
-      name: 'Heo',
-      imageUrl: 'https://images.unsplash.com/photo-1567201080580-bfcc97dae346?q=80&w=2080&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      quantity: '24',
-      vaccinationNote: 'Tiêm phòng bệnh tai xanh',
-      food: 'Cám tổng hợp',
-      cage: 'Chuồng B2',
-    ),
-    Livestock(
-      name: 'Gà',
-      imageUrl: 'https://images.unsplash.com/photo-1644217147354-17d6e38108c6?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8Y2hpY2tlbnN8ZW58MHx8MHx8fDA%3D',
-      quantity: '50',
-      vaccinationNote: 'Chưa tiêm phòng',
-      food: 'Thức ăn hỗn hợp',
-      cage: 'Chuồng C',
-    ),
-    Livestock(
-      name: 'Dê',
-      imageUrl: 'https://plus.unsplash.com/premium_photo-1681882343875-0c709293d624?q=80&w=2028&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      quantity: '16',
-      vaccinationNote: 'Tiêm vắc xin lở mồm long móng',
-      food: 'Lá cây, rau củ',
-      cage: 'Chuồng D4',
-    ),
-    Livestock(
-        name: 'Vịt',
-        imageUrl: 'https://images.unsplash.com/photo-1465153690352-10c1b29577f8?q=80&w=1915&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-        quantity: '30',
-        vaccinationNote: 'chưa tiêm phòng',
-        food: 'Rau củ, cá',
-        cage: 'Chuồng D1')
-  ];
+class LivestockGridScreen extends StatefulWidget {
+  @override
+  _LivestockGridScreenState createState() => _LivestockGridScreenState();
+}
+
+class _LivestockGridScreenState extends State<LivestockGridScreen> {
+  // SỬA LỖI: Cập nhật đường dẫn đến node cha 'quan_ly_chan_nuoi/vat_nuoi'
+  final DatabaseReference _ref = FirebaseDatabase.instance.ref("quan_ly_chan_nuoi/vat_nuoi");
+
+  List<Livestock> _livestockList = [];
+  bool _loading = true;
+
+  // Giữ nguyên map hình ảnh của bạn
+  final Map<String, String> imageMap = {
+    'BÒ': 'https://plus.unsplash.com/premium_photo-1661962510497-9505129083fa?q=80',
+    'Heo trắng': 'https://images.unsplash.com/photo-1567201080580-bfcc97dae346?q=80',
+    'Gà ta': 'https://images.unsplash.com/photo-1644217147354-17d6e38108c6?w=600',
+    'Dê': 'https://plus.unsplash.com/premium_photo-1681882343875-0c709293d624?q=80',
+    'Vịt siêm': 'https://images.unsplash.com/photo-1465153690352-10c1b29577f8?q=80',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    fetchLivestock();
+  }
+
+  Future<void> fetchLivestock() async {
+    try {
+      final snapshot = await _ref.get();
+      if (snapshot.exists) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        final tempList = <Livestock>[];
+
+        data.forEach((key, value) {
+          if (value is Map<dynamic, dynamic>) {
+            final name = value['ten']?.toString() ?? '';
+            // Lấy URL ảnh từ map, nếu không có thì dùng ảnh mặc định
+            final imageUrl = imageMap[name] ?? 'https://via.placeholder.com/150';
+
+            tempList.add(Livestock.fromMap(
+              key.toString(),
+              value,
+              imageUrl,
+            ));
+          }
+        });
+
+        if (mounted) { // Kiểm tra widget còn tồn tại trước khi gọi setState
+          setState(() {
+            _livestockList = tempList;
+            print('Đã tải được ${_livestockList.length} vật nuôi');
+          });
+        }
+      } else {
+        print('Không tìm thấy dữ liệu tại đường dẫn: ${_ref.path}');
+      }
+    } catch (e) {
+      print('Lỗi khi tải dữ liệu: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(leading: BackButton(color: Colors.black),
+      appBar: AppBar(
+        leading: const BackButton(color: Colors.black),
         backgroundColor: Colors.white,
         centerTitle: true,
         title: const Text(
-          'Toàn bộ vật nuôi',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
+          'Quản lý vật nuôi',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
-        elevation: 1,),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      ),
+      body: _loading
+          ? Center(child: CircularProgressIndicator())
+          : _livestockList.isEmpty
+          ? Center(child: Text('Không có vật nuôi nào'))
+          : Padding(
+        padding: const EdgeInsets.all(16.0),
         child: GridView.builder(
-          itemCount: livestockList.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.8,
           ),
+          itemCount: _livestockList.length,
           itemBuilder: (context, index) {
-            final animal = livestockList[index];
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => LivestockDetailScreen(livestock: animal),
-                  ),
-                );
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.network(
-                        animal.imageUrl,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
+            final animal = _livestockList[index];
+            return Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => LivestockDetailScreen(
+                        livestock: animal,
+                        key: ValueKey(animal.id),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    animal.name,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                  );
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(12),
+                        ),
+                        child: Image.network(
+                          animal.imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Icon(Icons.error, size: 50),
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            animal.ten,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Số lượng: ${animal.soLuong}',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-        },
-        backgroundColor: Colors.green,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
 
-// Màn hình chi tiết động vật
+// Đảm bảo bạn có class này để màn hình chi tiết hoạt động
 class LivestockDetailScreen extends StatelessWidget {
   final Livestock livestock;
 
@@ -147,38 +218,30 @@ class LivestockDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(leading: BackButton(color: Colors.black),
+      appBar: AppBar(
+        leading: const BackButton(color: Colors.black),
         backgroundColor: Colors.white,
         centerTitle: true,
         title: Text(
-          livestock.name,
-          style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        elevation: 1,),
+          livestock.ten,
+          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: Image.network(
-                  livestock.imageUrl,
-                  height: 200,
-                  fit: BoxFit.cover,
-                ),
+                child: Image.network(livestock.imageUrl, height: 200, fit: BoxFit.cover),
               ),
             ),
-            const SizedBox(height: 16),
-            Text("Tên: ${livestock.name}", style: TextStyle(fontSize: 18)),
-            Text("Số lượng: ${livestock.quantity}", style: TextStyle(fontSize: 18)),
-            Text("Ghi chú tiêm chủng: ${livestock.vaccinationNote}", style: TextStyle(fontSize: 18)),
-            Text("Thức ăn: ${livestock.food}", style: TextStyle(fontSize: 18)),
-            Text("Chuồng: ${livestock.cage}", style: TextStyle(fontSize: 18)),
+            SizedBox(height: 16),
+            Text("Tên: ${livestock.ten}", style: TextStyle(fontSize: 18)),
+            Text("Số lượng: ${livestock.soLuong}", style: TextStyle(fontSize: 18)),
+            Text("Thức ăn: ${livestock.thucAn}", style: TextStyle(fontSize: 18)),
+            Text("Chuồng: ${livestock.chuong}", style: TextStyle(fontSize: 18)),
           ],
         ),
       ),
