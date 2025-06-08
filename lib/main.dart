@@ -6,6 +6,7 @@ import 'package:livestockmanagement/Screens/home_page.dart';
 import 'package:livestockmanagement/Screens/livestock_page.dart';
 import 'package:livestockmanagement/Screens/setting_page.dart';
 import 'package:livestockmanagement/Screens/login_page.dart';
+import 'package:livestockmanagement/Screens/getusername.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -36,14 +37,13 @@ class FarmApp extends StatelessWidget {
           ),
         ),
       ),
-      home:
-          const AuthWrapper(), // Sử dụng AuthWrapper để kiểm tra trạng thái đăng nhập
+      home: const AuthWrapper(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
-// Widget mới để kiểm tra trạng thái đăng nhập
+// SỬA LỖI: Cập nhật AuthWrapper để kiểm tra displayName
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
@@ -58,7 +58,14 @@ class AuthWrapper extends StatelessWidget {
           );
         }
         if (snapshot.hasData) {
-          // Nếu người dùng đã đăng nhập, hiển thị HomeScreen
+          final user = snapshot.data;
+          // Kiểm tra nếu người dùng đã đăng nhập nhưng chưa có displayName
+          if (user != null &&
+              (user.displayName == null || user.displayName!.isEmpty)) {
+            // Chuyển đến trang nhập tên
+            return const GetUsernamePage();
+          }
+          // Nếu có displayName, vào trang chính
           return const HomeScreen();
         }
         // Nếu chưa, hiển thị trang đăng nhập
@@ -80,16 +87,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _pages = [
     const HomePage(),
-    LivestockGridScreen(),
+    const LivestockGridScreen(),
     const StatisticsPage(),
-    SettingsScreen(),
+    const SettingsScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _pages[_currentIndex],
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomNav(
         currentIndex: _currentIndex,
         onTap: (index) {
