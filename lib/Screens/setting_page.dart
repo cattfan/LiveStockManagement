@@ -45,15 +45,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await FirebaseAuth.instance.signOut();
   }
 
-  void _saveUserInfo() {
-    // Logic để lưu thông tin người dùng vào Firebase (ví dụ: Firestore hoặc Realtime DB)
-    // Ví dụ: currentUser?.updateDisplayName(nameController.text);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Đã lưu thông tin người dùng (demo)')),
-    );
-    setState(() {
-      isEditing = false;
-    });
+  Future<void> _saveUserInfo() async {
+    if (nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Tên không được để trống')));
+      return;
+    }
+    try {
+      await currentUser?.updateDisplayName(nameController.text.trim());
+      // Bạn có thể thêm logic cập nhật số điện thoại vào Realtime DB nếu cần
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đã cập nhật thông tin!')));
+      setState(() {
+        isEditing = false;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Lỗi khi cập nhật: $e')));
+    }
   }
 
   @override
@@ -109,7 +121,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               labelText: 'Email',
               prefixIcon: Icon(Icons.email),
             ),
-            enabled: false, // Email không nên cho sửa
+            enabled: false,
           ),
           const SizedBox(height: 10),
           TextField(
