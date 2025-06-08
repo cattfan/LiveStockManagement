@@ -49,17 +49,18 @@ class _LivestockSignUpPageState extends State<LivestockSignUpPage> {
             .child(user.uid);
         await appDataRef.set({'initialized': true});
 
-        // *** SỬA LỖI: Đăng xuất ngay sau khi đăng ký để quay về trang đăng nhập ***
+        // SỬA LỖI: Đăng xuất ngay sau khi đăng ký để quay về trang đăng nhập
         await FirebaseAuth.instance.signOut();
       }
 
+      // THAY ĐỔI: Đưa Navigator.pop() lên trước để đảm bảo ngữ cảnh đúng
       if (mounted) {
+        Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Đăng ký thành công! Vui lòng đăng nhập.'),
           ),
         );
-        Navigator.of(context).pop();
       }
     } on FirebaseAuthException catch (e) {
       String message = 'Đã xảy ra lỗi.';

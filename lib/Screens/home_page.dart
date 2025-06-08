@@ -51,6 +51,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _fetchTodayNotes() {
+    // SỬA: Đảm bảo đọc từ node 'ghi_chu'
     _userRef?.child('ghi_chu').onValue.listen((DatabaseEvent event) {
       if (!mounted) return;
       final snapshot = event.snapshot;
@@ -79,16 +80,18 @@ class _HomePageState extends State<HomePage> {
             }
           }
         });
-
         loadedNotes.sort((a, b) => a.reminderDate!.compareTo(b.reminderDate!));
       }
-      setState(() {
-        _todayNotes = loadedNotes;
-      });
-    }, onError: (error) {});
+      if (mounted) {
+        setState(() {
+          _todayNotes = loadedNotes;
+        });
+      }
+    });
   }
 
   void _fetchTotalLivestock() {
+    // SỬA: Đảm bảo đọc từ node 'vat_nuoi'
     _userRef
         ?.child('vat_nuoi')
         .onValue
@@ -105,10 +108,12 @@ class _HomePageState extends State<HomePage> {
                 sum += quantity;
               });
             }
-            setState(() {
-              _totalLivestock = sum;
-              _isLoading = false;
-            });
+            if (mounted) {
+              setState(() {
+                _totalLivestock = sum;
+                _isLoading = false;
+              });
+            }
           },
           onError: (error) {
             if (mounted) {
@@ -121,6 +126,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _fetchNoteCount() {
+    // SỬA: Đảm bảo đọc từ node 'ghi_chu'
     _userRef?.child('ghi_chu').onValue.listen((DatabaseEvent event) {
       if (!mounted) return;
       final snapshot = event.snapshot;
@@ -128,10 +134,12 @@ class _HomePageState extends State<HomePage> {
       if (snapshot.exists && snapshot.value is Map) {
         count = (snapshot.value as Map).length;
       }
-      setState(() {
-        _noteCount = count;
-      });
-    }, onError: (error) {});
+      if (mounted) {
+        setState(() {
+          _noteCount = count;
+        });
+      }
+    });
   }
 
   @override
