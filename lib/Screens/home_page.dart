@@ -6,8 +6,8 @@ import 'package:livestockmanagement/widgets/feature_card.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/vaccination_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/storage_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/feed_management_page.dart';
-import 'home_child_screens/Barn_Page/barn_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/Barn_Page/barn_management_page.dart';
+import 'home_child_screens/livestock_management/livestock_management_page.dart';
 import 'livestock_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -212,11 +212,13 @@ class _HomePageState extends State<HomePage> {
                             label: 'Quản lý Vật nuôi',
                             iconColor: const Color(0xFF34D399),
                             bgColor: const Color(0xFFD1FAE5),
-                            onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                                  LivestockGridScreen())
-                              );
-                            }
+                          onTap: () { // Thêm hàm onTap
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const
+                              LivestockManagementPage()),
+                            );
+                          },
                         ),
 
                         FeatureCard(icon: Icons.home_work_outlined,

@@ -45,14 +45,14 @@ class LivestockGridScreen extends StatelessWidget {
       quantity: '50',
       vaccinationNote: 'Chưa tiêm phòng',
       food: 'Thức ăn hỗn hợp',
-      cage: 'Khu C',
+      cage: 'Chuồng C',
     ),
     Livestock(
       name: 'Dê',
       imageUrl: 'https://plus.unsplash.com/premium_photo-1681882343875-0c709293d624?q=80&w=2028&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       quantity: '16',
       vaccinationNote: 'Tiêm vắc xin lở mồm long móng',
-      food: 'Lá cây, cỏ',
+      food: 'Lá cây, rau củ',
       cage: 'Chuồng D4',
     ),
     Livestock(
@@ -60,7 +60,7 @@ class LivestockGridScreen extends StatelessWidget {
         imageUrl: 'https://images.unsplash.com/photo-1465153690352-10c1b29577f8?q=80&w=1915&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
         quantity: '30',
         vaccinationNote: 'chưa tiêm phòng',
-        food: 'lá cây, cá',
+        food: 'Rau củ, cá',
         cage: 'Chuồng D1')
   ];
 
