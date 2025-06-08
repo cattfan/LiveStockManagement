@@ -9,6 +9,7 @@ import 'package:livestockmanagement/Screens/home_child_screens/feed_management_p
 import 'package:livestockmanagement/Screens/home_child_screens/Barn_Page/barn_management_page.dart';
 import 'home_child_screens/livestock_management/livestock_management_page.dart';
 import 'livestock_page.dart';
+import 'package:livestockmanagement/Screens/note_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -261,10 +262,17 @@ class _HomePageState extends State<HomePage> {
                             );
                           },
                         ),
-                        const FeatureCard(icon: Icons.receipt_long_outlined,
-                            label: 'Ghi chú',
-                            iconColor: Color(0xFF34D399),
-                            bgColor: Color(0xFFD1FAE5)
+                        FeatureCard(
+                          icon: Icons.receipt_long_outlined,
+                          label: 'Ghi chú',
+                          iconColor: const Color(0xFF34D399),
+                          bgColor: const Color(0xFFD1FAE5),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const NotesListPage()),
+                            );
+                          },
                         ),
                       ],
                     ),

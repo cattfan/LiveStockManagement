@@ -1,28 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:livestockmanagement/Screens/signup_page.dart';
+import 'package:livestockmanagement/Screens/login_page.dart'; // Import trang đăng nhập
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Livestock Management',
-      theme: ThemeData(
-        fontFamily: 'Manrope',
-      ),
-      home: const LivestockLoginPage(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
-
-class LivestockLoginPage extends StatelessWidget {
-  const LivestockLoginPage({super.key});
+class LivestockSignUpPage extends StatelessWidget {
+  const LivestockSignUpPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +47,7 @@ class LivestockLoginPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                     child: Container(
                       width: double.infinity,
-                      height: 218.0,
+                      height: 180.0, // Giảm chiều cao để có không gian cho trường mới
                       decoration: BoxDecoration(
                         color: bgColor,
                         borderRadius: BorderRadius.circular(12.0),
@@ -83,7 +63,7 @@ class LivestockLoginPage extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 20.0, bottom: 12.0, left: 16.0, right: 16.0),
                     child: Text(
-                      'Đăng nhập',
+                      'Tạo tài khoản',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: secondaryTextColor,
@@ -94,6 +74,7 @@ class LivestockLoginPage extends StatelessWidget {
                     ),
                   ),
 
+                  // Trường nhập tài khoản
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                     child: ConstrainedBox(
@@ -121,6 +102,7 @@ class LivestockLoginPage extends StatelessWidget {
                     ),
                   ),
 
+                  // Trường nhập mật khẩu
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                     child: ConstrainedBox(
@@ -149,31 +131,38 @@ class LivestockLoginPage extends StatelessWidget {
                     ),
                   ),
 
+                  // Trường xác nhận mật khẩu
                   Padding(
-                    padding: const EdgeInsets.only(top: 4.0, bottom: 12.0, left: 16.0, right: 16.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 480),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: InkWell(
-                          onTap: () {
-                            // Xử lý quên mật khẩu
-                          },
-                          child: Text(
-                            'Quên mật khẩu?',
-                            style: TextStyle(
-                              color: secondaryTextColor,
-                              fontSize: 14.0,
-                              fontWeight: FontWeight.normal,
-                            ),
+                      child: TextField(
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          hintText: 'Xác nhận mật khẩu',
+                          hintStyle: const TextStyle(color: secondaryTextColor, fontSize: 16.0),
+                          filled: true,
+                          fillColor: inputBgColor,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                            borderSide: BorderSide.none,
                           ),
+                          contentPadding: const EdgeInsets.all(16.0),
+                          isDense: true,
                         ),
+                        style: const TextStyle(
+                          color: primaryTextColor,
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.normal,
+                        ),
+                        keyboardType: TextInputType.visiblePassword,
                       ),
                     ),
                   ),
 
+                  // Nút đăng ký
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 480),
                       child: ElevatedButton(
@@ -187,14 +176,14 @@ class LivestockLoginPage extends StatelessWidget {
                           elevation: 0,
                         ),
                         onPressed: () {
-                          // Xử lý đăng nhập
+                          // Xử lý logic đăng ký
                         },
                         child: SizedBox(
                           width: double.infinity,
                           height: 48,
                           child: Center(
                             child: Text(
-                              'Đăng nhập',
+                              'Đăng ký',
                               style: TextStyle(
                                 color: primaryTextColor,
                                 fontSize: 16.0,
@@ -211,20 +200,18 @@ class LivestockLoginPage extends StatelessWidget {
                 ],
               ),
 
+              // Liên kết quay lại trang đăng nhập
               Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(top: 4.0, bottom: 12.0),
                     child: InkWell(
-                      // Cập nhật onTap để điều hướng
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const LivestockSignUpPage()),
-                        );
+                        // Quay lại trang đăng nhập
+                        Navigator.pop(context);
                       },
                       child: Text(
-                        "Bạn không có tài khoản? Đăng kí ngay",
+                        "Đã có tài khoản? Đăng nhập",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: secondaryTextColor,
