@@ -3,6 +3,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/auth_page/login_page.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -16,55 +17,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool isNotificationEnabled = true;
   bool isEditing = false;
 
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
-  final phoneController = TextEditingController();
+  final User? currentUser = FirebaseAuth.instance.currentUser;
 
-  final user = FirebaseAuth.instance.currentUser;
+  late final TextEditingController nameController;
+  late final TextEditingController emailController;
+  late final TextEditingController phoneController;
 
   @override
   void initState() {
     super.initState();
-    _loadUserInfo();
-  }
-
-  Future<void> _loadUserInfo() async {
-    if (user == null) return;
-
-    final ref = FirebaseDatabase.instance.ref('users/${user!.uid}');
-    final snapshot = await ref.get();
-
-    if (snapshot.exists) {
-      final data = snapshot.value as Map<dynamic, dynamic>;
-
-      nameController.text = data['name'] ?? '';
-      emailController.text = data['email'] ?? user!.email ?? '';
-      phoneController.text = data['phone'] ?? '';
-    } else {
-      nameController.text = '';
-      emailController.text = user?.email ?? '';
-      phoneController.text = '';
-    }
-  }
-
-  Future<void> _saveUserInfo() async {
-    if (user == null) return;
-
-    final ref = FirebaseDatabase.instance.ref('users/${user!.uid}');
-    await ref.update({
-      'name': nameController.text.trim(),
-      'email': emailController.text.trim(),
-      'phone': phoneController.text.trim(),
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Đã lưu thông tin người dùng')),
+    nameController = TextEditingController(
+      text: currentUser?.displayName ?? 'Chưa có tên',
     );
+    emailController = TextEditingController(
+      text: currentUser?.email ?? 'Không có email',
+    );
+    phoneController = TextEditingController(
+      text: currentUser?.phoneNumber ?? 'Chưa có SĐT',
+    );
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    super.dispose();
   }
 
   Future<void> _signOut() async {
     await FirebaseAuth.instance.signOut();
-    // AuthWrapper sẽ tự động điều hướng
+  }
+
+  Future<void> _saveUserInfo() async {
+    if (nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Tên không được để trống')));
+      return;
+    }
+    try {
+      await currentUser?.updateDisplayName(nameController.text.trim());
+      // Bạn có thể thêm logic cập nhật số điện thoại vào Realtime DB nếu cần
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đã cập nhật thông tin!')));
+      setState(() {
+        isEditing = false;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Lỗi khi cập nhật: $e')));
+    }
   }
 
   @override
@@ -95,10 +100,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onPressed: () {
                   if (isEditing) {
                     _saveUserInfo();
+                  } else {
+                    setState(() {
+                      isEditing = true;
+                    });
                   }
-                  setState(() {
-                    isEditing = !isEditing;
-                  });
                 },
               ),
             ],
@@ -121,7 +127,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               hintText: 'Vui lòng nhập email',
               prefixIcon: Icon(Icons.email),
             ),
-            enabled: isEditing,
+            enabled: false,
           ),
           const SizedBox(height: 10),
           TextField(
@@ -154,21 +160,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('Đổi mật khẩu'),
             onTap: () {},
           ),
-          ListTile(
-            leading: const Icon(Icons.language),
-            title: const Text('Ngôn ngữ'),
-            subtitle: const Text('Tiếng Việt'),
-            onTap: () {},
-          ),
-          SwitchListTile(
-            title: const Text('Chế độ tối'),
-            value: isDarkMode,
-            onChanged: (val) {
-              setState(() {
-                isDarkMode = val;
-              });
-            },
-          ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
@@ -184,18 +175,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder:
-          (_) => AlertDialog(
+          (dialogContext) => AlertDialog(
             title: const Text('Xác nhận đăng xuất'),
             content: const Text('Bạn có muốn đăng xuất hay không?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(dialogContext),
                 child: const Text('Không'),
               ),
               ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context); // Đóng dialog
-                  _signOut();
+                onPressed: () async {
+                  final pageContext = context;
+                  Navigator.pop(dialogContext);
+                  await _signOut();
+
+                  if (mounted) {
+                    Navigator.of(pageContext).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => const LivestockLoginPage(),
+                      ),
+                      (Route<dynamic> route) => false,
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 child: const Text('Có', style: TextStyle(color: Colors.white)),

@@ -1,6 +1,7 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/livestock_management/livestock_management_page.dart';
+import 'package:livestockmanagement/Screens/statistics_page.dart';
+import 'package:livestockmanagement/Screens/setting_page.dart';
 
 class BottomNav extends StatelessWidget {
   final int currentIndex;
@@ -20,22 +21,58 @@ class BottomNav extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
-            _buildBottomNavItem(0, Icons.home_outlined, 'Trang chủ', currentIndex == 0, context),
-            _buildBottomNavItem(1, Icons.pets_outlined, 'Vật nuôi', currentIndex == 1, context),
-            _buildBottomNavItem(2, Icons.bar_chart_outlined, 'Thống kê', currentIndex == 2, context),
-            _buildBottomNavItem(3, Icons.settings_outlined, 'Cài đặt', currentIndex == 3, context),
+            _buildBottomNavItem(context, 0, Icons.home_outlined, 'Trang chủ'),
+            _buildBottomNavItem(context, 1, Icons.pets_outlined, 'Vật nuôi'),
+            _buildBottomNavItem(
+              context,
+              2,
+              Icons.bar_chart_outlined,
+              'Thống kê',
+            ),
+            _buildBottomNavItem(context, 3, Icons.settings_outlined, 'Cài đặt'),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBottomNavItem(int index, IconData icon, String label, bool isActive, BuildContext context) {
+  void _handleNavigation(BuildContext context, int index) {
+    // Không làm gì nếu đang ở trang chủ (index = 0)
+    if (index == 0) return;
+
+    Widget page;
+    switch (index) {
+      case 1:
+        page = const LivestockManagementPage();
+        break;
+      case 2:
+        page = const StatisticsPage();
+        break;
+      case 3:
+        page = const SettingsScreen();
+        break;
+      default:
+        return;
+    }
+
+    // Sử dụng Navigator.push để mở trang mới, tạo ra nút quay lại
+    Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+  }
+
+  Widget _buildBottomNavItem(
+    BuildContext context,
+    int index,
+    IconData icon,
+    String label,
+  ) {
+    // Trang chủ luôn được active vì chúng ta đang ở HomeScreen
+    final bool isActive = (currentIndex == 0 && index == 0);
     final color = isActive ? Colors.green[600] : Colors.grey[600];
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => onTap(index),
+        onTap: () => _handleNavigation(context, index),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4.0),
@@ -51,7 +88,7 @@ class BottomNav extends StatelessWidget {
                   color: color,
                   fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
                 ),
-              )
+              ),
             ],
           ),
         ),

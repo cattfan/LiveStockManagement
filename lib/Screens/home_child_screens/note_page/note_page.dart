@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
@@ -12,12 +13,21 @@ class NotesListPage extends StatefulWidget {
 }
 
 class _NotesListPageState extends State<NotesListPage> {
-  final DatabaseReference _notesRef = FirebaseDatabase.instance.ref('notes');
+  DatabaseReference? _notesRef;
 
   static const Color primaryTextColor = Color(0xFF0e1b0e);
   static const Color secondaryTextColor = Color(0xFF4e974e);
   static const Color cardBgColor = Color(0xFFe7f3e7);
   static const Color pageBgColor = Color(0xFFf8fcf8);
+
+  @override
+  void initState() {
+    super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _notesRef = FirebaseDatabase.instance.ref('app_data/${user.uid}/ghi_chu');
+    }
+  }
 
   Future<void> _showDeleteConfirmationDialog(String noteKey) async {
     return showDialog<void>(
@@ -43,7 +53,7 @@ class _NotesListPageState extends State<NotesListPage> {
             TextButton(
               child: const Text('Có'),
               onPressed: () {
-                _notesRef.child(noteKey).remove();
+                _notesRef?.child(noteKey).remove();
                 Navigator.of(context).pop();
               },
             ),
@@ -161,90 +171,98 @@ class _NotesListPageState extends State<NotesListPage> {
           ),
         ),
       ),
-      body: StreamBuilder(
-        stream: _notesRef.onValue,
-        builder: (context, AsyncSnapshot<DatabaseEvent> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body:
+          _notesRef == null
+              ? const Center(child: Text("Vui lòng đăng nhập để xem ghi chú."))
+              : StreamBuilder(
+                stream: _notesRef!.onValue,
+                builder: (context, AsyncSnapshot<DatabaseEvent> snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-          if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
-            return const Center(
-              child: Text(
-                'Chưa có ghi chú nào.',
-                style: TextStyle(color: primaryTextColor),
+                  if (!snapshot.hasData ||
+                      snapshot.data?.snapshot.value == null) {
+                    return const Center(
+                      child: Text(
+                        'Chưa có ghi chú nào.',
+                        style: TextStyle(color: primaryTextColor),
+                      ),
+                    );
+                  }
+
+                  final List<Note> todayNotes = [];
+                  final List<Note> upcomingNotes = [];
+                  final List<Note> pastNotes = [];
+                  final now = DateTime.now();
+                  final startOfToday = DateTime(now.year, now.month, now.day);
+
+                  final notesMap = Map<String, dynamic>.from(
+                    snapshot.data!.snapshot.value as Map,
+                  );
+                  notesMap.forEach((key, value) {
+                    final noteData = Map<String, dynamic>.from(value);
+                    final note = Note(
+                      key: key,
+                      title: noteData['title'] ?? 'Không có tiêu đề',
+                      content: noteData['content'] ?? '',
+                      reminderDate:
+                          noteData['reminderDate'] != null
+                              ? DateTime.tryParse(noteData['reminderDate'])
+                              : null,
+                    );
+
+                    if (note.reminderDate != null) {
+                      final reminderDay = DateTime(
+                        note.reminderDate!.year,
+                        note.reminderDate!.month,
+                        note.reminderDate!.day,
+                      );
+                      if (reminderDay.isAtSameMomentAs(startOfToday)) {
+                        todayNotes.add(note);
+                      } else if (note.reminderDate!.isAfter(now)) {
+                        upcomingNotes.add(note);
+                      } else {
+                        pastNotes.add(note);
+                      }
+                    } else {
+                      pastNotes.add(note);
+                    }
+                  });
+
+                  todayNotes.sort(
+                    (a, b) => a.reminderDate!.compareTo(b.reminderDate!),
+                  );
+                  upcomingNotes.sort(
+                    (a, b) => a.reminderDate!.compareTo(b.reminderDate!),
+                  );
+                  pastNotes.sort((a, b) {
+                    if (a.reminderDate == null && b.reminderDate == null)
+                      return 0;
+                    if (a.reminderDate == null) return 1;
+                    if (b.reminderDate == null) return -1;
+                    return b.reminderDate!.compareTo(a.reminderDate!);
+                  });
+
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (todayNotes.isNotEmpty)
+                          _buildSectionTitle('Ghi chú trong ngày'),
+                        ...todayNotes.map((note) => _buildNoteItem(note)),
+                        if (upcomingNotes.isNotEmpty)
+                          _buildSectionTitle('Ghi chú sắp tới'),
+                        ...upcomingNotes.map((note) => _buildNoteItem(note)),
+                        if (pastNotes.isNotEmpty)
+                          _buildSectionTitle('Ghi chú đã qua'),
+                        ...pastNotes.map((note) => _buildNoteItem(note)),
+                      ],
+                    ),
+                  );
+                },
               ),
-            );
-          }
-
-          final List<Note> todayNotes = [];
-          final List<Note> upcomingNotes = [];
-          final List<Note> pastNotes = [];
-          final now = DateTime.now();
-          final startOfToday = DateTime(now.year, now.month, now.day);
-
-          final notesMap = Map<String, dynamic>.from(
-            snapshot.data!.snapshot.value as Map,
-          );
-          notesMap.forEach((key, value) {
-            final noteData = Map<String, dynamic>.from(value);
-            final note = Note(
-              key: key,
-              title: noteData['title'] ?? 'Không có tiêu đề',
-              content: noteData['content'] ?? '',
-              reminderDate:
-                  noteData['reminderDate'] != null
-                      ? DateTime.tryParse(noteData['reminderDate'])
-                      : null,
-            );
-
-            if (note.reminderDate != null) {
-              final reminderDay = DateTime(
-                note.reminderDate!.year,
-                note.reminderDate!.month,
-                note.reminderDate!.day,
-              );
-              if (reminderDay.isAtSameMomentAs(startOfToday)) {
-                todayNotes.add(note);
-              } else if (note.reminderDate!.isAfter(now)) {
-                upcomingNotes.add(note);
-              } else {
-                pastNotes.add(note);
-              }
-            } else {
-              pastNotes.add(note);
-            }
-          });
-
-          todayNotes.sort((a, b) => a.reminderDate!.compareTo(b.reminderDate!));
-          upcomingNotes.sort(
-            (a, b) => a.reminderDate!.compareTo(b.reminderDate!),
-          );
-          pastNotes.sort((a, b) {
-            if (a.reminderDate == null && b.reminderDate == null) return 0;
-            if (a.reminderDate == null) return 1;
-            if (b.reminderDate == null) return -1;
-            return b.reminderDate!.compareTo(a.reminderDate!);
-          });
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (todayNotes.isNotEmpty)
-                  _buildSectionTitle('Ghi chú trong ngày'),
-                ...todayNotes.map((note) => _buildNoteItem(note)),
-                if (upcomingNotes.isNotEmpty)
-                  _buildSectionTitle('Ghi chú sắp tới'),
-                ...upcomingNotes.map((note) => _buildNoteItem(note)),
-                if (pastNotes.isNotEmpty) _buildSectionTitle('Ghi chú đã qua'),
-                ...pastNotes.map((note) => _buildNoteItem(note)),
-              ],
-            ),
-          );
-        },
-      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(

@@ -1,11 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/livestock_management/livestock_management_page.dart';
 import 'package:livestockmanagement/Screens/statistics_page.dart';
 import 'package:livestockmanagement/widgets/bottom_nav.dart';
 import 'package:livestockmanagement/Screens/home_page.dart';
-import 'package:livestockmanagement/Screens/livestock_page.dart';
 import 'package:livestockmanagement/Screens/setting_page.dart';
-import 'package:livestockmanagement/Screens/login_page.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/auth_page/login_page.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/auth_page/getusername.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -36,14 +37,12 @@ class FarmApp extends StatelessWidget {
           ),
         ),
       ),
-      home:
-          const AuthWrapper(), // Sử dụng AuthWrapper để kiểm tra trạng thái đăng nhập
+      home: const AuthWrapper(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
-// Widget mới để kiểm tra trạng thái đăng nhập
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
@@ -58,10 +57,13 @@ class AuthWrapper extends StatelessWidget {
           );
         }
         if (snapshot.hasData) {
-          // Nếu người dùng đã đăng nhập, hiển thị HomeScreen
+          final user = snapshot.data;
+          if (user != null &&
+              (user.displayName == null || user.displayName!.isEmpty)) {
+            return const GetUsernamePage();
+          }
           return const HomeScreen();
         }
-        // Nếu chưa, hiển thị trang đăng nhập
         return const LivestockLoginPage();
       },
     );
@@ -76,26 +78,16 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _pages = [
-    const HomePage(),
-    LivestockGridScreen(),
-    const StatisticsPage(),
-    SettingsScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_currentIndex],
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      // Body chỉ là HomePage
+      body: const HomePage(),
+      // BottomNav sẽ xử lý việc điều hướng
       bottomNavigationBar: BottomNav(
-        currentIndex: _currentIndex,
+        currentIndex: 0, // Luôn ở tab Trang chủ
         onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          // Logic điều hướng sẽ được xử lý trong BottomNav
         },
       ),
     );

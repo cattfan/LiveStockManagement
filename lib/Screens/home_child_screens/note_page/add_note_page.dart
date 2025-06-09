@@ -1,5 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
-
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:livestockmanagement/models/note_model.dart';
@@ -18,7 +17,7 @@ class _NotesPageState extends State<NotesPage> {
   final TextEditingController _reminderController = TextEditingController();
   DateTime? _selectedDateTime;
 
-  final DatabaseReference _notesRef = FirebaseDatabase.instance.ref('notes');
+  DatabaseReference? _notesRef;
 
   static const Color primaryTextColor = Color(0xFF0e1b0e);
   static const Color secondaryTextColor = Color(0xFF4e974e);
@@ -28,6 +27,11 @@ class _NotesPageState extends State<NotesPage> {
   @override
   void initState() {
     super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _notesRef = FirebaseDatabase.instance.ref('app_data/${user.uid}/ghi_chu');
+    }
+
     if (widget.note != null) {
       _titleController.text = widget.note!.title;
       _notesController.text = widget.note!.content;
@@ -70,6 +74,12 @@ class _NotesPageState extends State<NotesPage> {
   }
 
   void _saveNote() {
+    if (_notesRef == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lỗi: Người dùng chưa đăng nhập.')),
+      );
+      return;
+    }
     final String title = _titleController.text;
     final String notes = _notesController.text;
     final String? reminder = _selectedDateTime?.toIso8601String();
@@ -82,7 +92,7 @@ class _NotesPageState extends State<NotesPage> {
       };
 
       if (widget.note != null) {
-        _notesRef
+        _notesRef!
             .child(widget.note!.key!)
             .update(noteData)
             .then((_) {
@@ -97,7 +107,7 @@ class _NotesPageState extends State<NotesPage> {
               );
             });
       } else {
-        _notesRef
+        _notesRef!
             .push()
             .set(noteData)
             .then((_) {
@@ -116,6 +126,12 @@ class _NotesPageState extends State<NotesPage> {
   }
 
   void _deleteNote() {
+    if (_notesRef == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lỗi: Người dùng chưa đăng nhập.')),
+      );
+      return;
+    }
     if (widget.note == null || widget.note!.key == null) return;
     showDialog(
       context: context,
@@ -131,7 +147,7 @@ class _NotesPageState extends State<NotesPage> {
               TextButton(
                 child: const Text('Xóa', style: TextStyle(color: Colors.red)),
                 onPressed: () {
-                  _notesRef
+                  _notesRef!
                       .child(widget.note!.key!)
                       .remove()
                       .then((_) {
@@ -392,10 +408,9 @@ class _NotesPageState extends State<NotesPage> {
                   child: const Text(
                     'Lưu',
                     style: TextStyle(
-                      color: primaryTextColor,
+                      color: Colors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.015 * 14,
                     ),
                   ),
                 ),

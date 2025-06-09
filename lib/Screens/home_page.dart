@@ -1,5 +1,4 @@
-// ignore_for_file: deprecated_member_use
-
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -10,10 +9,11 @@ import 'package:livestockmanagement/Screens/home_child_screens/vaccination_page.
 import 'package:livestockmanagement/Screens/home_child_screens/storage_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/feed_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/Barn_Page/barn_management_page.dart';
-import 'home_child_screens/livestock_management/livestock_management_page.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/livestock_management/livestock_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/note_page/note_page.dart';
 
 class HomePage extends StatefulWidget {
+  // Loại bỏ hàm callback không cần thiết
   const HomePage({super.key});
 
   @override
@@ -25,17 +25,31 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = true;
   int _noteCount = 0;
   List<Note> _todayNotes = [];
-  String _userName = ''; // Biến lưu tên người dùng
+  String _userName = "User";
 
-  final User? _user = FirebaseAuth.instance.currentUser;
+  DatabaseReference? _userRef;
 
   @override
   void initState() {
     super.initState();
-    _fetchUserName();
-    _fetchTotalLivestock();
-    _fetchNoteCount();
-    _fetchTodayNotes();
+    _initializeUserData();
+  }
+
+  void _initializeUserData() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _userName = user.displayName ?? user.email ?? "User";
+      _userRef = FirebaseDatabase.instance.ref('app_data/${user.uid}');
+      _fetchTotalLivestock();
+      _fetchNoteCount();
+      _fetchTodayNotes();
+    } else {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   // Hàm lấy tên người dùng từ Firebase Realtime Database
@@ -58,12 +72,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _fetchTodayNotes() {
-    DatabaseReference notesRef = FirebaseDatabase.instance.ref('notes');
-    notesRef.onValue.listen((DatabaseEvent event) {
+    _userRef?.child('ghi_chu').onValue.listen((DatabaseEvent event) {
+      if (!mounted) return;
       final snapshot = event.snapshot;
-      if (snapshot.exists && mounted) {
+      final List<Note> loadedNotes = [];
+      if (snapshot.exists && snapshot.value is Map) {
         final notesMap = Map<String, dynamic>.from(snapshot.value as Map);
-        final List<Note> loadedNotes = [];
         final today = DateTime.now();
 
         notesMap.forEach((key, value) {
@@ -86,87 +100,74 @@ class _HomePageState extends State<HomePage> {
             }
           }
         });
-
         loadedNotes.sort((a, b) => a.reminderDate!.compareTo(b.reminderDate!));
-
+      }
+      if (mounted) {
         setState(() {
           _todayNotes = loadedNotes;
         });
       }
-    }, onError: (error) {});
+    });
   }
 
   void _fetchTotalLivestock() {
-    DatabaseReference vatnuoiRef = FirebaseDatabase.instance.ref('Vatnuoi');
-    vatnuoiRef.onValue.listen(
-      (DatabaseEvent event) {
-        if (event.snapshot.exists) {
-          final data = event.snapshot.value as Map<dynamic, dynamic>;
-          int sum = 0;
-          data.forEach((key, value) {
-            final animalData = value as Map<dynamic, dynamic>;
-            final quantity =
-                int.tryParse(animalData['Soluong'].toString()) ?? 0;
-            sum += quantity;
-          });
-
-          if (mounted) {
-            setState(() {
-              _totalLivestock = sum;
-              _isLoading = false;
-            });
-          }
-        } else {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-          }
-        }
-      },
-      onError: (error) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      },
-    );
+    _userRef
+        ?.child('vat_nuoi')
+        .onValue
+        .listen(
+          (DatabaseEvent event) {
+            if (!mounted) return;
+            int sum = 0;
+            if (event.snapshot.exists && event.snapshot.value is Map) {
+              final data = event.snapshot.value as Map;
+              data.forEach((key, value) {
+                final animalData = value as Map;
+                final quantity =
+                    int.tryParse(animalData['soLuong']?.toString() ?? '0') ?? 0;
+                sum += quantity;
+              });
+            }
+            if (mounted) {
+              setState(() {
+                _totalLivestock = sum;
+                _isLoading = false;
+              });
+            }
+          },
+          onError: (error) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+              });
+            }
+          },
+        );
   }
 
   void _fetchNoteCount() {
-    DatabaseReference notesRef = FirebaseDatabase.instance.ref('notes');
-    notesRef.onValue.listen((DatabaseEvent event) {
+    _userRef?.child('ghi_chu').onValue.listen((DatabaseEvent event) {
+      if (!mounted) return;
       final snapshot = event.snapshot;
-
-      if (snapshot.exists) {
-        final value = snapshot.value;
-
-        int count = 0;
-
-        if (value is Map) {
-          count = value.length;
-        }
-
-        if (mounted) {
-          setState(() {
-            _noteCount = count;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _noteCount = 0;
-          });
-        }
+      int count = 0;
+      if (snapshot.exists && snapshot.value is Map) {
+        count = (snapshot.value as Map).length;
       }
-    }, onError: (error) {});
+      if (mounted) {
+        setState(() {
+          _noteCount = count;
+        });
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final constrainedWidth = screenWidth > 500 ? 500.0 : screenWidth;
+
+    if (_userRef == null) {
+      return const Center(child: Text("Không có người dùng đăng nhập."));
+    }
 
     return Center(
       child: ConstrainedBox(
@@ -244,9 +245,7 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _userName.isNotEmpty
-                                    ? 'Xin chào, $_userName!'
-                                    : 'Xin chào!',
+                                'Xin chào, $_userName!',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
@@ -294,6 +293,7 @@ class _HomePageState extends State<HomePage> {
                         label: 'Quản lý Vật nuôi',
                         iconColor: const Color(0xFF34D399),
                         bgColor: const Color(0xFFD1FAE5),
+                        // *** KHÔI PHỤC LẠI NAVIGATOR.PUSH ***
                         onTap: () {
                           Navigator.push(
                             context,
@@ -347,8 +347,8 @@ class _HomePageState extends State<HomePage> {
                         },
                       ),
                       FeatureCard(
-                        icon: Icons.storage_outlined,
-                        label: 'Quản lý kho',
+                        icon: Icons.inventory_2_outlined,
+                        label: 'Quản lý Vật tư',
                         iconColor: const Color(0xFF34D399),
                         bgColor: const Color(0xFFD1FAE5),
                         onTap: () {
@@ -410,51 +410,59 @@ class _HomePageState extends State<HomePage> {
           ),
           child: Row(
             children: [
-              _buildStatisticItem(
-                icon: Icons.pets_outlined,
-                label: 'Tổng số vật nuôi',
-                value: _isLoading ? '...' : '$_totalLivestock',
-                iconColor: Colors.green[600],
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tổng số vật nuôi',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      ),
+                      Text(
+                        _isLoading ? '...' : _totalLivestock.toString(),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(width: 24),
-              _buildStatisticItem(
-                icon: Icons.note_alt_outlined,
-                label: 'Số ghi chú',
-                value: '$_noteCount',
-                iconColor: Colors.green[600],
+              const SizedBox(width: 16),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    color: Colors.yellow[50],
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tổng số ghi chú',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      ),
+                      Text(
+                        _isLoading ? '...' : _noteCount.toString(),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.yellow[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatisticItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color? iconColor,
-  }) {
-    return Expanded(
-      child: Row(
-        children: [
-          Icon(icon, size: 36, color: iconColor),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[800])),
-              const SizedBox(height: 4),
-              Text(value,
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[900])),
             ],
           ),
         ],
