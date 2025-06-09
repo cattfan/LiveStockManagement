@@ -253,8 +253,8 @@ class _NotesListPageState extends State<NotesListPage> {
           );
         },
         backgroundColor: secondaryTextColor,
-        child: const Icon(Icons.add, color: pageBgColor),
         elevation: 1,
+        child: const Icon(Icons.add, color: pageBgColor),
       ),
     );
   }

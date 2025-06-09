@@ -34,7 +34,7 @@ class _LivestockManagementPageState extends State<LivestockManagementPage> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Đã xảy ra lỗi: ${snapshot.error}'));
+            return Center(child: Text('Không thể tìm thấy vật nuôi.'));
           }
           if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
             return const Center(child: Text('Chưa có vật nuôi nào.'));

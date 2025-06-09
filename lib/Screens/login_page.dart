@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:livestockmanagement/Screens/signup_page.dart';
@@ -14,6 +16,7 @@ class _LivestockLoginPageState extends State<LivestockLoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscureText = true; // 👉 Mới: Ẩn/hiện mật khẩu
 
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
@@ -37,9 +40,7 @@ class _LivestockLoginPageState extends State<LivestockLoginPage> {
       } else if (e.code == 'invalid-email') {
         message = 'Địa chỉ email không hợp lệ.';
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -72,7 +73,6 @@ class _LivestockLoginPageState extends State<LivestockLoginPage> {
           child: Form(
             key: _formKey,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 const SizedBox(height: 20),
@@ -129,7 +129,7 @@ class _LivestockLoginPageState extends State<LivestockLoginPage> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _passwordController,
-                  obscureText: true,
+                  obscureText: _obscureText,
                   decoration: InputDecoration(
                     hintText: 'Mật khẩu',
                     hintStyle: const TextStyle(color: secondaryTextColor),
@@ -138,6 +138,17 @@ class _LivestockLoginPageState extends State<LivestockLoginPage> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
                       borderSide: BorderSide.none,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureText ? Icons.visibility_off : Icons.visibility,
+                        color: secondaryTextColor,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureText = !_obscureText;
+                        });
+                      },
                     ),
                   ),
                   style: const TextStyle(color: primaryTextColor),
@@ -162,23 +173,23 @@ class _LivestockLoginPageState extends State<LivestockLoginPage> {
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: buttonBgColor,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24.0),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: buttonBgColor,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24.0),
+                          ),
+                        ),
+                        onPressed: _signIn,
+                        child: const Text(
+                          'Đăng nhập',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                      onPressed: _signIn,
-                      child: const Text(
-                        'Đăng nhập',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

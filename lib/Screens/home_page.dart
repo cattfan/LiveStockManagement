@@ -1,4 +1,7 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
 import 'package:livestockmanagement/models/note_model.dart';
@@ -8,7 +11,6 @@ import 'package:livestockmanagement/Screens/home_child_screens/storage_managemen
 import 'package:livestockmanagement/Screens/home_child_screens/feed_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/Barn_Page/barn_management_page.dart';
 import 'home_child_screens/livestock_management/livestock_management_page.dart';
-import 'livestock_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/note_page/note_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -23,13 +25,36 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = true;
   int _noteCount = 0;
   List<Note> _todayNotes = [];
+  String _userName = ''; // Biến lưu tên người dùng
+
+  final User? _user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
     super.initState();
+    _fetchUserName();
     _fetchTotalLivestock();
     _fetchNoteCount();
     _fetchTodayNotes();
+  }
+
+  // Hàm lấy tên người dùng từ Firebase Realtime Database
+  Future<void> _fetchUserName() async {
+    if (_user == null) return;
+
+    final userRef = FirebaseDatabase.instance.ref('users/${_user.uid}');
+    try {
+      final snapshot = await userRef.get();
+      if (snapshot.exists) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        setState(() {
+          _userName = data['name'] ?? '';
+        });
+      }
+    } catch (e) {
+      // Có thể thêm xử lý lỗi tại đây nếu cần
+      debugPrint('Lỗi khi lấy tên người dùng: $e');
+    }
   }
 
   void _fetchTodayNotes() {
@@ -219,7 +244,9 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Xin chào, An Nguyễn!',
+                                _userName.isNotEmpty
+                                    ? 'Xin chào, $_userName!'
+                                    : 'Xin chào!',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
@@ -320,22 +347,21 @@ class _HomePageState extends State<HomePage> {
                         },
                       ),
                       FeatureCard(
-                        icon: Icons.inventory_2_outlined,
-                        label: 'Quản lý Kho',
+                        icon: Icons.storage_outlined,
+                        label: 'Quản lý kho',
                         iconColor: const Color(0xFF34D399),
                         bgColor: const Color(0xFFD1FAE5),
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder:
-                                  (context) => const StorageManagementPage(),
+                              builder: (context) => const StorageManagementPage(),
                             ),
                           );
                         },
                       ),
                       FeatureCard(
-                        icon: Icons.receipt_long_outlined,
+                        icon: Icons.note_alt_outlined,
                         label: 'Ghi chú',
                         iconColor: const Color(0xFF34D399),
                         bgColor: const Color(0xFFD1FAE5),
@@ -350,11 +376,10 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 16),
+                  _buildStatisticsSection(),
                   const SizedBox(height: 24),
-                  _buildFarmOverviewCard(),
-                  const SizedBox(height: 24),
-                  _buildTodayTasksCard(),
-                  const SizedBox(height: 80),
+                  _buildNoteRemindersSection(),
                 ]),
               ),
             ),
@@ -364,210 +389,113 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildFarmOverviewCard() {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.07),
-            spreadRadius: 0,
-            blurRadius: 10,
+  Widget _buildStatisticsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Thống kê',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[700],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: Colors.green[50],
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          child: Row(
             children: [
-              Text(
-                'Tổng quan trang trại',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[700],
-                ),
+              _buildStatisticItem(
+                icon: Icons.pets_outlined,
+                label: 'Tổng số vật nuôi',
+                value: _isLoading ? '...' : '$_totalLivestock',
+                iconColor: Colors.green[600],
+              ),
+              const SizedBox(width: 24),
+              _buildStatisticItem(
+                icon: Icons.note_alt_outlined,
+                label: 'Số ghi chú',
+                value: '$_noteCount',
+                iconColor: Colors.green[600],
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Colors.green[50],
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Tổng số vật nuôi',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                      ),
-                      Text(
-                        _isLoading ? 'Đang tải...' : _totalLivestock.toString(),
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Colors.yellow[50],
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Tổng số ghi chú',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                      ),
-                      Text(
-                        _isLoading ? 'Đang tải...' : _noteCount.toString(),
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.yellow[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildTodayTasksCard() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.07),
-            spreadRadius: 0,
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 20.0),
-            child: Text(
-              'Công việc hôm nay',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
-              ),
-            ),
-          ),
-          _todayNotes.isEmpty
-              ? Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 4.0,
-                  horizontal: 8.0,
-                ),
-                child: Center(
-                  child: Text(
-                    'Không có công việc nào cho hôm nay.',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                  ),
-                ),
-              )
-              : ListView.separated(
-                itemCount: _todayNotes.length,
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                physics: const NeverScrollableScrollPhysics(),
-                itemBuilder: (context, index) {
-                  final note = _todayNotes[index];
-                  final time =
-                      note.reminderDate != null
-                          ? DateFormat('HH:mm a').format(note.reminderDate!)
-                          : '';
-                  return InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NotesListPage(),
-                        ),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: _buildTaskItem(
-                      Icons.receipt_long_outlined,
-                      Colors.blue[500]!,
-                      note.title,
-                      time,
-                    ),
-                  );
-                },
-                separatorBuilder: (context, index) => const SizedBox(height: 4),
-              ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaskItem(
-    IconData icon,
-    Color iconColor,
-    String title,
-    String time,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8.0),
-      ),
+  Widget _buildStatisticItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color? iconColor,
+  }) {
+    return Expanded(
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Row(
-              children: [
-                Icon(icon, color: iconColor, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          Icon(icon, size: 36, color: iconColor),
           const SizedBox(width: 8),
-          Text(time, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[800])),
+              const SizedBox(height: 4),
+              Text(value,
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[900])),
+            ],
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildNoteRemindersSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Lời nhắc hôm nay',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[700],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          constraints: BoxConstraints(maxHeight: 320),
+          child: _todayNotes.isEmpty
+              ? const Center(
+                  child: Text('Không có lời nhắc nào hôm nay.'),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _todayNotes.length,
+                  itemBuilder: (context, index) {
+                    final note = _todayNotes[index];
+                    final formattedDate = DateFormat('HH:mm').format(note.reminderDate!);
+                    return ListTile(
+                      leading: const Icon(Icons.notification_add_outlined),
+                      title: Text(note.title),
+                      subtitle: Text(formattedDate),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }

@@ -1,5 +1,7 @@
 // File: lib/Screens/home_child_screens/feed_management_page.dart
 
+// ignore_for_file: use_build_context_synchronously, avoid_print, unused_element
+
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'dart:async'; // Dùng cho StreamSubscription
@@ -54,9 +56,6 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
       });
     }, onError: (Object error) {
       print('--- LỖI khi tải dữ liệu từ Firebase: $error ---');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi khi tải dữ liệu thức ăn: $error')),
-      );
     });
   }
 
@@ -81,24 +80,22 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
 
   // Hàm để cập nhật mục trong Firebase
   void _updateFeedItem(String itemId, Map<String, dynamic> updatedItem) { // Thay đổi kiểu dữ liệu thành dynamic
-    if (itemId != null) {
-      // SỬA TÊN TRƯỜNG ĐỂ KHỚP VỚI FIREBASE KHI GHI
-      _feedRef.child(itemId).update({
-        'HanDuoung': updatedItem['name'], // name trong form -> HanDuoung trong Firebase
-        'ngaysx': updatedItem['expiryDate'], // expiryDate trong form -> ngaysx trong Firebase
-        'khoiluong': updatedItem['weight'], // weight trong form -> khoiluong trong Firebase (đã xử lý " Kg" trong EditForm)
-        'Phanloai': updatedItem['type'], // type trong form -> Phanloai trong Firebase
-      }).then((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cập nhật thức ăn thành công!')),
-        );
-      }).catchError((error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Cập nhật thất bại: $error')),
-        );
-      });
+    // SỬA TÊN TRƯỜNG ĐỂ KHỚP VỚI FIREBASE KHI GHI
+    _feedRef.child(itemId).update({
+      'HanDuoung': updatedItem['name'], // name trong form -> HanDuoung trong Firebase
+      'ngaysx': updatedItem['expiryDate'], // expiryDate trong form -> ngaysx trong Firebase
+      'khoiluong': updatedItem['weight'], // weight trong form -> khoiluong trong Firebase (đã xử lý " Kg" trong EditForm)
+      'Phanloai': updatedItem['type'], // type trong form -> Phanloai trong Firebase
+    }).then((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cập nhật thức ăn thành công!')),
+      );
+    }).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Cập nhật thất bại: $error')),
+      );
+    });
     }
-  }
 
   // Hàm để xóa mục khỏi Firebase
   void _deleteFeedItem(String itemId) {
@@ -117,18 +114,16 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
             ),
             ElevatedButton(
               onPressed: () {
-                if (itemId != null) {
-                  _feedRef.child(itemId).remove().then((_) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Xóa thức ăn thành công!')),
-                    );
-                  }).catchError((error) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Xóa thất bại: $error')),
-                    );
-                  });
-                }
-                Navigator.of(context).pop(); // Đóng hộp thoại
+                _feedRef.child(itemId).remove().then((_) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Xóa thức ăn thành công!')),
+                  );
+                }).catchError((error) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Xóa thất bại: $error')),
+                  );
+                });
+                              Navigator.of(context).pop(); // Đóng hộp thoại
               },
               child: const Text('Xóa'),
             ),

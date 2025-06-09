@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print, use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart'; // Import Firebase Realtime Database
 import 'dart:async'; // Dùng cho StreamSubscription
@@ -78,9 +80,6 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
       });
     }, onError: (Object error) {
       print('--- LỖI khi tải dữ liệu từ Firebase Realtime Database: $error ---');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi khi tải dữ liệu vật tư: $error')),
-      );
     });
   }
 

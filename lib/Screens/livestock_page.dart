@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print, library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 
@@ -34,6 +36,8 @@ class Livestock {
 }
 
 class LivestockGridScreen extends StatefulWidget {
+  const LivestockGridScreen({super.key});
+
   @override
   _LivestockGridScreenState createState() => _LivestockGridScreenState();
 }

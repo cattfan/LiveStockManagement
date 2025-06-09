@@ -1,4 +1,7 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -13,19 +16,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool isNotificationEnabled = true;
   bool isEditing = false;
 
-  final TextEditingController nameController = TextEditingController(
-    text: 'Nguyễn Văn A',
-  );
-  final TextEditingController emailController = TextEditingController(
-    text: 'email@example.com',
-  );
-  final TextEditingController phoneController = TextEditingController(
-    text: '0123 456 789',
-  );
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+
+  final user = FirebaseAuth.instance.currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+  }
+
+  Future<void> _loadUserInfo() async {
+    if (user == null) return;
+
+    final ref = FirebaseDatabase.instance.ref('users/${user!.uid}');
+    final snapshot = await ref.get();
+
+    if (snapshot.exists) {
+      final data = snapshot.value as Map<dynamic, dynamic>;
+
+      nameController.text = data['name'] ?? '';
+      emailController.text = data['email'] ?? user!.email ?? '';
+      phoneController.text = data['phone'] ?? '';
+    } else {
+      nameController.text = '';
+      emailController.text = user?.email ?? '';
+      phoneController.text = '';
+    }
+  }
+
+  Future<void> _saveUserInfo() async {
+    if (user == null) return;
+
+    final ref = FirebaseDatabase.instance.ref('users/${user!.uid}');
+    await ref.update({
+      'name': nameController.text.trim(),
+      'email': emailController.text.trim(),
+      'phone': phoneController.text.trim(),
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Đã lưu thông tin người dùng')),
+    );
+  }
 
   Future<void> _signOut() async {
     await FirebaseAuth.instance.signOut();
-    // AuthWrapper sẽ tự động xử lý điều hướng
+    // AuthWrapper sẽ tự động điều hướng
   }
 
   @override
@@ -55,11 +94,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icon(isEditing ? Icons.save : Icons.edit),
                 onPressed: () {
                   if (isEditing) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Đã lưu thông tin người dùng'),
-                      ),
-                    );
+                    _saveUserInfo();
                   }
                   setState(() {
                     isEditing = !isEditing;
@@ -73,6 +108,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             controller: nameController,
             decoration: const InputDecoration(
               labelText: 'Họ và tên',
+              hintText: 'Vui lòng nhập họ và tên',
               prefixIcon: Icon(Icons.person),
             ),
             enabled: isEditing,
@@ -82,6 +118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             controller: emailController,
             decoration: const InputDecoration(
               labelText: 'Email',
+              hintText: 'Vui lòng nhập email',
               prefixIcon: Icon(Icons.email),
             ),
             enabled: isEditing,
@@ -91,10 +128,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             controller: phoneController,
             decoration: const InputDecoration(
               labelText: 'Số điện thoại',
+              hintText: 'Vui lòng nhập số điện thoại',
               prefixIcon: Icon(Icons.phone),
             ),
             enabled: isEditing,
           ),
+
           const SizedBox(height: 20),
           const Divider(),
           const Text(
@@ -155,7 +194,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context); // Đóng dialog xác nhận
+                  Navigator.pop(context); // Đóng dialog
                   _signOut();
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),

@@ -35,7 +35,7 @@ class _BarnManagementPageState extends State<BarnManagementPage> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Đã xảy ra lỗi: ${snapshot.error}'));
+            return Center(child: Text('Không thể tìm thấy chuồng trại.'));
           }
           if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
             return const Center(child: Text('Chưa có chuồng trại nào.'));
