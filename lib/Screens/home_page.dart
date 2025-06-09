@@ -54,22 +54,23 @@ class _HomePageState extends State<HomePage> {
 
   // Hàm lấy tên người dùng từ Firebase Realtime Database
   Future<void> _fetchUserName() async {
-    if (_user == null) return;
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
 
-    final userRef = FirebaseDatabase.instance.ref('users/${_user.uid}');
-    try {
-      final snapshot = await userRef.get();
-      if (snapshot.exists) {
-        final data = snapshot.value as Map<dynamic, dynamic>;
-        setState(() {
-          _userName = data['name'] ?? '';
-        });
-      }
-    } catch (e) {
-      // Có thể thêm xử lý lỗi tại đây nếu cần
-      debugPrint('Lỗi khi lấy tên người dùng: $e');
+  final userRef = FirebaseDatabase.instance.ref('users/${user.uid}');
+  try {
+    final snapshot = await userRef.get();
+    if (snapshot.exists) {
+      final data = snapshot.value as Map<dynamic, dynamic>;
+      setState(() {
+        _userName = data['name'] ?? '';
+      });
     }
+  } catch (e) {
+    debugPrint('Lỗi khi lấy tên người dùng: $e');
   }
+}
+
 
   void _fetchTodayNotes() {
     _userRef?.child('ghi_chu').onValue.listen((DatabaseEvent event) {
@@ -465,8 +466,8 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
