@@ -13,6 +13,10 @@ class BarnManagementPage extends StatefulWidget {
 
 class _BarnManagementPageState extends State<BarnManagementPage> {
   DatabaseReference? _dbRef;
+  static const Color primaryTextColor = Color(0xFF0e1b0e);
+  static const Color secondaryTextColor = Color(0xFF4e974e);
+  static const Color cardBgColor = Color(0xFFe7f3e7);
+  static const Color pageBgColor = Color(0xFFf8fcf8);
 
   @override
   void initState() {
@@ -28,15 +32,19 @@ class _BarnManagementPageState extends State<BarnManagementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: pageBgColor,
       appBar: AppBar(
-        leading: const BackButton(color: Colors.black),
-        backgroundColor: Colors.white,
+        leading: const BackButton(color: primaryTextColor),
+        backgroundColor: pageBgColor,
         centerTitle: true,
         title: const Text(
           'Quản lý chuồng trại',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: primaryTextColor,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        elevation: 1,
+        elevation: 0,
       ),
       body:
           _dbRef == null
@@ -65,7 +73,6 @@ class _BarnManagementPageState extends State<BarnManagementPage> {
                   final List<Barn> barnList = [];
 
                   data.forEach((key, value) {
-                    // Sử dụng factory constructor để đảm bảo dữ liệu được đọc đúng
                     barnList.add(
                       Barn.fromSnapshot(snapshot.data!.snapshot.child(key)),
                     );
@@ -77,26 +84,49 @@ class _BarnManagementPageState extends State<BarnManagementPage> {
                     itemBuilder: (context, index) {
                       final barn = barnList[index];
                       return Card(
+                        color: cardBgColor,
+                        elevation: 0,
                         margin: const EdgeInsets.symmetric(vertical: 8.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
                         child: ListTile(
                           title: Text(
                             barn.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: primaryTextColor,
+                            ),
                           ),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 4),
-                              // Hiển thị chính xác số lượng đã sử dụng
-                              Text('Sức chứa: ${barn.used}/${barn.capacity}'),
+                              Text(
+                                'Sức chứa: ${barn.used}/${barn.capacity}',
+                                style: const TextStyle(color: primaryTextColor),
+                              ),
                               if (barn.temp.isNotEmpty)
-                                Text('Nhiệt độ: ${barn.temp}'),
+                                Text(
+                                  'Nhiệt độ: ${barn.temp}',
+                                  style: const TextStyle(
+                                    color: primaryTextColor,
+                                  ),
+                                ),
                               if (barn.humidity.isNotEmpty)
-                                Text('Độ ẩm: ${barn.humidity}'),
+                                Text(
+                                  'Độ ẩm: ${barn.humidity}',
+                                  style: const TextStyle(
+                                    color: primaryTextColor,
+                                  ),
+                                ),
                             ],
                           ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.grey),
+                            icon: const Icon(
+                              Icons.edit,
+                              color: secondaryTextColor,
+                            ),
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -121,7 +151,7 @@ class _BarnManagementPageState extends State<BarnManagementPage> {
             MaterialPageRoute(builder: (context) => const AddEditBarnPage()),
           );
         },
-        backgroundColor: Colors.green,
+        backgroundColor: secondaryTextColor,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );

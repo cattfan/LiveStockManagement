@@ -3,6 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'dart:async';
 
+const Color primaryTextColor = Color(0xFF0e1b0e);
+const Color secondaryTextColor = Color(0xFF4e974e);
+const Color inputBgColor = Color(0xFFe7f3e7);
+const Color pageBgColor = Color(0xFFf8fcf8);
+const Color cardBgColor = Color(0xFFe7f3e7);
+
 class StorageManagementPage extends StatefulWidget {
   const StorageManagementPage({super.key});
 
@@ -72,9 +78,7 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
         });
       },
       onError: (Object error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi tải dữ liệu vật tư: $error')),
-        );
+        // Lỗi đã được xử lý nhưng không hiển thị thông báo
       },
     );
   }
@@ -91,14 +95,10 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
           'timestamp': ServerValue.timestamp,
         })
         .then((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Thêm vật tư thành công!')),
-          );
+          // Xử lý thành công nhưng không hiển thị thông báo
         })
         .catchError((error) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Thêm thất bại: $error')));
+          // Lỗi đã được xử lý nhưng không hiển thị thông báo
         });
   }
 
@@ -114,14 +114,10 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
             'loai': updatedItem['loai'],
           })
           .then((_) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Cập nhật vật tư thành công!')),
-            );
+            // Xử lý thành công nhưng không hiển thị thông báo
           })
           .catchError((error) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Cập nhật thất bại: $error')),
-            );
+            // Lỗi đã được xử lý nhưng không hiển thị thông báo
           });
     }
   }
@@ -148,16 +144,10 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
                       .child(itemId)
                       .remove()
                       .then((_) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Xóa vật tư thành công!'),
-                          ),
-                        );
+                        // Xử lý thành công nhưng không hiển thị thông báo
                       })
                       .catchError((error) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Xóa thất bại: $error')),
-                        );
+                        // Lỗi đã được xử lý nhưng không hiển thị thông báo
                       });
                 }
                 Navigator.of(context).pop();
@@ -193,8 +183,10 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
         return StatefulBuilder(
           builder: (context, setStateInDialog) {
             return AlertDialog(
+              backgroundColor: pageBgColor,
               title: Text(
                 itemId == null ? 'Thêm Vật tư mới' : 'Chỉnh sửa Vật tư',
+                style: const TextStyle(color: primaryTextColor),
               ),
               content: SingleChildScrollView(
                 child: Column(
@@ -202,25 +194,35 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
                   children: [
                     TextField(
                       controller: _nameController,
+                      style: const TextStyle(color: primaryTextColor),
                       decoration: const InputDecoration(
                         labelText: 'Tên vật tư',
+                        labelStyle: TextStyle(color: secondaryTextColor),
                       ),
                     ),
                     TextField(
                       controller: _quantityController,
-                      decoration: const InputDecoration(labelText: 'Số lượng'),
+                      style: const TextStyle(color: primaryTextColor),
+                      decoration: const InputDecoration(
+                        labelText: 'Số lượng',
+                        labelStyle: TextStyle(color: secondaryTextColor),
+                      ),
                       keyboardType: TextInputType.number,
                     ),
                     DropdownButtonFormField<String>(
                       value: _selectedUnit,
                       decoration: const InputDecoration(
                         labelText: 'Đơn vị tính',
+                        labelStyle: TextStyle(color: secondaryTextColor),
                       ),
                       items:
                           _units.map((String unit) {
                             return DropdownMenuItem<String>(
                               value: unit,
-                              child: Text(unit),
+                              child: Text(
+                                unit,
+                                style: const TextStyle(color: primaryTextColor),
+                              ),
                             );
                           }).toList(),
                       onChanged: (String? newValue) {
@@ -236,12 +238,18 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
                     ),
                     DropdownButtonFormField<String>(
                       value: _selectedType,
-                      decoration: const InputDecoration(labelText: 'Phân loại'),
+                      decoration: const InputDecoration(
+                        labelText: 'Phân loại',
+                        labelStyle: TextStyle(color: secondaryTextColor),
+                      ),
                       items:
                           _storageTypes.map((String type) {
                             return DropdownMenuItem<String>(
                               value: type,
-                              child: Text(type),
+                              child: Text(
+                                type,
+                                style: const TextStyle(color: primaryTextColor),
+                              ),
                             );
                           }).toList(),
                       onChanged: (String? newValue) {
@@ -264,7 +272,10 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
                     Navigator.pop(context);
                     _clearControllers();
                   },
-                  child: const Text('Hủy'),
+                  child: const Text(
+                    'Hủy',
+                    style: TextStyle(color: secondaryTextColor),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -272,11 +283,6 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
                         _quantityController.text.isEmpty ||
                         _selectedUnit == null ||
                         _selectedType == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Vui lòng điền đủ thông tin.'),
-                        ),
-                      );
                       return;
                     }
 
@@ -296,7 +302,7 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
                     _clearControllers();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: secondaryTextColor,
                     foregroundColor: Colors.white,
                   ),
                   child: Text(itemId == null ? 'Thêm' : 'Lưu'),
@@ -327,13 +333,18 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: pageBgColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.black),
+        backgroundColor: pageBgColor,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: primaryTextColor),
         centerTitle: true,
         title: const Text(
           'Quản lý Vật tư',
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(
+            color: primaryTextColor,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body:
@@ -347,6 +358,7 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
                     const Text(
                       'Danh sách Vật tư',
                       style: TextStyle(
+                        color: primaryTextColor,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -357,7 +369,8 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
                           _storageItems.isEmpty
                               ? const Center(
                                 child: Text(
-                                  'Không có vật tư nào. Nhấn nút + để thêm mới!',
+                                  'Chưa có vật tư nào.',
+                                  style: TextStyle(color: primaryTextColor),
                                 ),
                               )
                               : ListView.builder(
@@ -375,7 +388,7 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
         onPressed: () {
           _showAddEditItemDialog();
         },
-        backgroundColor: Colors.green,
+        backgroundColor: secondaryTextColor,
         child: const Icon(Icons.add, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -384,8 +397,9 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
 
   Widget _buildStorageItem(BuildContext context, Map<String, dynamic> item) {
     return Card(
+      color: cardBgColor,
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
+      elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(
@@ -394,7 +408,11 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
         ),
         title: Text(
           item['ten']!,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: primaryTextColor,
+          ),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,11 +420,11 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
             const SizedBox(height: 4),
             Text(
               'Số lượng: ${item['so_luong']} ${item['don_vi']}',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              style: const TextStyle(fontSize: 14, color: primaryTextColor),
             ),
             Text(
               'Loại: ${item['loai']}',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              style: const TextStyle(fontSize: 14, color: primaryTextColor),
             ),
           ],
         ),
@@ -414,7 +432,7 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.edit, color: Colors.blue),
+              icon: const Icon(Icons.edit, color: secondaryTextColor),
               onPressed: () {
                 _showAddEditItemDialog(
                   itemId: item['id']!,

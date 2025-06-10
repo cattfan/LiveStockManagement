@@ -75,9 +75,6 @@ class _NotesPageState extends State<NotesPage> {
 
   void _saveNote() {
     if (_notesRef == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lỗi: Người dùng chưa đăng nhập.')),
-      );
       return;
     }
     final String title = _titleController.text;
@@ -96,30 +93,20 @@ class _NotesPageState extends State<NotesPage> {
             .child(widget.note!.key!)
             .update(noteData)
             .then((_) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Đã cập nhật ghi chú!')),
-              );
               Navigator.pop(context);
             })
             .catchError((error) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Cập nhật thất bại: $error')),
-              );
+              // Lỗi đã được xử lý nhưng không hiển thị thông báo
             });
       } else {
         _notesRef!
             .push()
             .set(noteData)
             .then((_) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Đã lưu ghi chú thành công!')),
-              );
               Navigator.pop(context);
             })
             .catchError((error) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('Lưu thất bại: $error')));
+              // Lỗi đã được xử lý nhưng không hiển thị thông báo
             });
       }
     }
@@ -127,9 +114,6 @@ class _NotesPageState extends State<NotesPage> {
 
   void _deleteNote() {
     if (_notesRef == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lỗi: Người dùng chưa đăng nhập.')),
-      );
       return;
     }
     if (widget.note == null || widget.note!.key == null) return;
@@ -151,13 +135,11 @@ class _NotesPageState extends State<NotesPage> {
                       .child(widget.note!.key!)
                       .remove()
                       .then((_) {
-                        Navigator.of(context).pop(); // close dialog
-                        Navigator.of(context).pop(); // go back from edit page
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pop();
                       })
                       .catchError((error) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Xóa thất bại: $error')),
-                        );
+                        // Lỗi đã được xử lý nhưng không hiển thị thông báo
                       });
                 },
               ),

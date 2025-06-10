@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:livestockmanagement/Screens/signup_page.dart';
@@ -16,7 +14,7 @@ class _LivestockLoginPageState extends State<LivestockLoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  bool _obscureText = true; // 👉 Mới: Ẩn/hiện mật khẩu
+  bool _obscureText = true;
 
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
@@ -30,17 +28,8 @@ class _LivestockLoginPageState extends State<LivestockLoginPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      // Điều hướng sẽ được xử lý tự động bởi AuthWrapper
     } on FirebaseAuthException catch (e) {
-      String message = 'Đã xảy ra lỗi.';
-      if (e.code == 'user-not-found') {
-        message = 'Không tìm thấy người dùng cho email này.';
-      } else if (e.code == 'wrong-password') {
-        message = 'Sai mật khẩu.';
-      } else if (e.code == 'invalid-email') {
-        message = 'Địa chỉ email không hợp lệ.';
-      }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      // Lỗi đã được xử lý nhưng không hiển thị thông báo
     } finally {
       if (mounted) {
         setState(() {
@@ -173,23 +162,23 @@ class _LivestockLoginPageState extends State<LivestockLoginPage> {
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: buttonBgColor,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24.0),
-                          ),
-                        ),
-                        onPressed: _signIn,
-                        child: const Text(
-                          'Đăng nhập',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: buttonBgColor,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24.0),
                         ),
                       ),
+                      onPressed: _signIn,
+                      child: const Text(
+                        'Đăng nhập',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

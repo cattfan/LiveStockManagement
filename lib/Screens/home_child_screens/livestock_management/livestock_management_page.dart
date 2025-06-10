@@ -21,6 +21,11 @@ class _LivestockManagementPageState extends State<LivestockManagementPage> {
   Map<String, String> _feedIdToNameMap = {};
   bool _isLoading = true;
 
+  static const Color primaryTextColor = Color(0xFF0e1b0e);
+  static const Color secondaryTextColor = Color(0xFF4e974e);
+  static const Color cardBgColor = Color(0xFFe7f3e7);
+  static const Color pageBgColor = Color(0xFFf8fcf8);
+
   @override
   void initState() {
     super.initState();
@@ -83,26 +88,46 @@ class _LivestockManagementPageState extends State<LivestockManagementPage> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Quản lý vật nuôi')),
+        backgroundColor: pageBgColor,
+        appBar: AppBar(
+          backgroundColor: pageBgColor,
+          elevation: 0,
+          title: const Text(
+            'Quản lý vật nuôi',
+            style: TextStyle(color: primaryTextColor),
+          ),
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_livestockRef == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Quản lý vật nuôi')),
+        backgroundColor: pageBgColor,
+        appBar: AppBar(
+          backgroundColor: pageBgColor,
+          elevation: 0,
+          title: const Text(
+            'Quản lý vật nuôi',
+            style: TextStyle(color: primaryTextColor),
+          ),
+        ),
         body: const Center(child: Text("Vui lòng đăng nhập để xem dữ liệu.")),
       );
     }
     return Scaffold(
+      backgroundColor: pageBgColor,
       appBar: AppBar(
-        leading: const BackButton(color: Colors.black),
-        backgroundColor: Colors.white,
+        leading: const BackButton(color: primaryTextColor),
+        backgroundColor: pageBgColor,
         centerTitle: true,
-        elevation: 1,
+        elevation: 0,
         title: const Text(
           'Quản lý vật nuôi',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: primaryTextColor,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: StreamBuilder(
@@ -112,7 +137,7 @@ class _LivestockManagementPageState extends State<LivestockManagementPage> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Không thể tìm thấy vật nuôi.'));
+            return const Center(child: Text('Không thể tìm thấy vật nuôi.'));
           }
           if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
             return const Center(child: Text('Chưa có vật nuôi nào.'));
@@ -139,6 +164,11 @@ class _LivestockManagementPageState extends State<LivestockManagementPage> {
               final feedName =
                   _feedIdToNameMap[livestock.thucAn] ?? 'Không xác định';
               return Card(
+                color: cardBgColor,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
                 margin: const EdgeInsets.symmetric(vertical: 8.0),
                 child: ListTile(
                   title: Text(
@@ -146,14 +176,16 @@ class _LivestockManagementPageState extends State<LivestockManagementPage> {
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
+                      color: primaryTextColor,
                     ),
                   ),
                   subtitle: Text(
                     'Loại: ${livestock.loai} | Số lượng: ${livestock.soLuong}\nChuồng: $barnName\nThức ăn: $feedName',
-                  ), // Hiển thị Loại
+                    style: const TextStyle(color: primaryTextColor),
+                  ),
                   isThreeLine: true,
                   trailing: IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.black54),
+                    icon: const Icon(Icons.edit, color: secondaryTextColor),
                     onPressed: () async {
                       await Navigator.push(
                         context,
@@ -182,7 +214,7 @@ class _LivestockManagementPageState extends State<LivestockManagementPage> {
           );
           _fetchDependencies();
         },
-        backgroundColor: Colors.green,
+        backgroundColor: secondaryTextColor,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );

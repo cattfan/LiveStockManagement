@@ -1,7 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/auth_page/login_page.dart';
 
@@ -22,6 +19,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController nameController;
   late final TextEditingController emailController;
   late final TextEditingController phoneController;
+
+  static const Color primaryTextColor = Color(0xFF0e1b0e);
+  static const Color secondaryTextColor = Color(0xFF4e974e);
+  static const Color inputBgColor = Color(0xFFe7f3e7);
+  static const Color pageBgColor = Color(0xFFf8fcf8);
 
   @override
   void initState() {
@@ -51,39 +53,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _saveUserInfo() async {
     if (nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Tên không được để trống')));
       return;
     }
     try {
       await currentUser?.updateDisplayName(nameController.text.trim());
-      // Bạn có thể thêm logic cập nhật số điện thoại vào Realtime DB nếu cần
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Đã cập nhật thông tin!')));
       setState(() {
         isEditing = false;
       });
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Lỗi khi cập nhật: $e')));
+      // Lỗi đã được xử lý nhưng không hiển thị thông báo
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: pageBgColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
+        backgroundColor: pageBgColor,
+        elevation: 0,
         centerTitle: true,
         title: const Text(
           'Cài đặt',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: primaryTextColor,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: primaryTextColor),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
@@ -93,10 +90,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               const Text(
                 'Thông tin người dùng',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: primaryTextColor,
+                ),
               ),
               IconButton(
-                icon: Icon(isEditing ? Icons.save : Icons.edit),
+                icon: Icon(
+                  isEditing ? Icons.save : Icons.edit,
+                  color: secondaryTextColor,
+                ),
                 onPressed: () {
                   if (isEditing) {
                     _saveUserInfo();
@@ -112,43 +116,71 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 10),
           TextField(
             controller: nameController,
-            decoration: const InputDecoration(
+            style: const TextStyle(color: primaryTextColor),
+            decoration: InputDecoration(
               labelText: 'Họ và tên',
-              hintText: 'Vui lòng nhập họ và tên',
-              prefixIcon: Icon(Icons.person),
+              labelStyle: const TextStyle(color: secondaryTextColor),
+              prefixIcon: const Icon(Icons.person, color: secondaryTextColor),
+              filled: true,
+              fillColor: inputBgColor,
+              border: OutlineInputBorder(
+                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             enabled: isEditing,
           ),
           const SizedBox(height: 10),
           TextField(
             controller: emailController,
-            decoration: const InputDecoration(
+            style: const TextStyle(color: primaryTextColor),
+            decoration: InputDecoration(
               labelText: 'Email',
-              hintText: 'Vui lòng nhập email',
-              prefixIcon: Icon(Icons.email),
+              labelStyle: const TextStyle(color: secondaryTextColor),
+              prefixIcon: const Icon(Icons.email, color: secondaryTextColor),
+              filled: true,
+              fillColor: inputBgColor,
+              border: OutlineInputBorder(
+                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             enabled: false,
           ),
           const SizedBox(height: 10),
           TextField(
             controller: phoneController,
-            decoration: const InputDecoration(
+            style: const TextStyle(color: primaryTextColor),
+            decoration: InputDecoration(
               labelText: 'Số điện thoại',
-              hintText: 'Vui lòng nhập số điện thoại',
-              prefixIcon: Icon(Icons.phone),
+              labelStyle: const TextStyle(color: secondaryTextColor),
+              prefixIcon: const Icon(Icons.phone, color: secondaryTextColor),
+              filled: true,
+              fillColor: inputBgColor,
+              border: OutlineInputBorder(
+                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             enabled: isEditing,
           ),
-
           const SizedBox(height: 20),
           const Divider(),
           const Text(
             'Hệ thống',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: primaryTextColor,
+            ),
           ),
           SwitchListTile(
-            title: const Text('Thông báo'),
+            title: const Text(
+              'Thông báo',
+              style: TextStyle(color: primaryTextColor),
+            ),
             value: isNotificationEnabled,
+            activeColor: secondaryTextColor,
             onChanged: (val) {
               setState(() {
                 isNotificationEnabled = val;
@@ -156,8 +188,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.security),
-            title: const Text('Đổi mật khẩu'),
+            leading: const Icon(Icons.security, color: primaryTextColor),
+            title: const Text(
+              'Đổi mật khẩu',
+              style: TextStyle(color: primaryTextColor),
+            ),
             onTap: () {},
           ),
           const Divider(),

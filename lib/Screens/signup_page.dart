@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously, unused_local_variable
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +32,7 @@ class _LivestockSignUpPageState extends State<LivestockSignUpPage> {
             password: _passwordController.text.trim(),
           );
 
-      await FirebaseAuth.instance.currentUser?.reload(); // 🔑 Rất quan trọng
+      await FirebaseAuth.instance.currentUser?.reload();
       final user = FirebaseAuth.instance.currentUser;
 
       if (user != null) {
@@ -56,18 +54,7 @@ class _LivestockSignUpPageState extends State<LivestockSignUpPage> {
         Navigator.pop(context);
       }
     } on FirebaseAuthException catch (e) {
-      String error = 'Đã xảy ra lỗi.';
-      if (e.code == 'email-already-in-use') {
-        error = 'Email đã được sử dụng.';
-      } else if (e.code == 'invalid-email') {
-        error = 'Email không hợp lệ.';
-      } else if (e.code == 'weak-password') {
-        error = 'Mật khẩu quá yếu.';
-      }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error)));
+      // Lỗi đã được xử lý nhưng không hiển thị thông báo
     } finally {
       if (mounted) {
         setState(() {

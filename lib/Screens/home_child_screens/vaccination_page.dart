@@ -39,6 +39,11 @@ class _VaccinationPageState extends State<VaccinationPage> {
   List<Vaccination> _pastVaccinations = [];
   bool _isLoading = true;
 
+  static const Color primaryTextColor = Color(0xFF0e1b0e);
+  static const Color secondaryTextColor = Color(0xFF4e974e);
+  static const Color cardBgColor = Color(0xFFe7f3e7);
+  static const Color pageBgColor = Color(0xFFf8fcf8);
+
   @override
   void initState() {
     super.initState();
@@ -75,7 +80,6 @@ class _VaccinationPageState extends State<VaccinationPage> {
           }
         });
       }
-      // Sort lists
       upcoming.sort((a, b) => a.ngayTiem.compareTo(b.ngayTiem));
       past.sort((a, b) => b.ngayTiem.compareTo(a.ngayTiem));
 
@@ -103,21 +107,29 @@ class _VaccinationPageState extends State<VaccinationPage> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text(isEditing ? 'Sửa Lịch Tiêm' : 'Thêm Lịch Tiêm Mới'),
+              backgroundColor: pageBgColor,
+              title: Text(
+                isEditing ? 'Sửa Lịch Tiêm' : 'Thêm Lịch Tiêm Mới',
+                style: const TextStyle(color: primaryTextColor),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
                       controller: nameController,
+                      style: const TextStyle(color: primaryTextColor),
                       decoration: const InputDecoration(
                         labelText: 'Tên Vắc-xin',
+                        labelStyle: TextStyle(color: secondaryTextColor),
                       ),
                     ),
                     TextField(
                       controller: typeController,
+                      style: const TextStyle(color: primaryTextColor),
                       decoration: const InputDecoration(
                         labelText: 'Loại Vật Nuôi',
+                        labelStyle: TextStyle(color: secondaryTextColor),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -126,10 +138,14 @@ class _VaccinationPageState extends State<VaccinationPage> {
                         Expanded(
                           child: Text(
                             'Ngày tiêm: ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
+                            style: const TextStyle(color: primaryTextColor),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.calendar_today),
+                          icon: const Icon(
+                            Icons.calendar_today,
+                            color: secondaryTextColor,
+                          ),
                           onPressed: () async {
                             final DateTime? picked = await showDatePicker(
                               context: context,
@@ -152,7 +168,10 @@ class _VaccinationPageState extends State<VaccinationPage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Hủy'),
+                  child: const Text(
+                    'Hủy',
+                    style: TextStyle(color: secondaryTextColor),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -169,6 +188,10 @@ class _VaccinationPageState extends State<VaccinationPage> {
                     }
                     Navigator.of(context).pop();
                   },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: secondaryTextColor,
+                    foregroundColor: Colors.white,
+                  ),
                   child: const Text('Lưu'),
                 ),
               ],
@@ -186,12 +209,17 @@ class _VaccinationPageState extends State<VaccinationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: pageBgColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.black),
+        backgroundColor: pageBgColor,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: primaryTextColor),
         title: const Text(
           'Lịch Tiêm Chủng',
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(
+            color: primaryTextColor,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
       ),
@@ -205,13 +233,17 @@ class _VaccinationPageState extends State<VaccinationPage> {
                 children: [
                   const Text(
                     'Lịch Sắp Tới',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: primaryTextColor,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   _upcomingVaccinations.isEmpty
                       ? const Text(
                         'Không có lịch tiêm chủng nào sắp tới.',
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(color: primaryTextColor),
                       )
                       : Column(
                         children:
@@ -222,13 +254,17 @@ class _VaccinationPageState extends State<VaccinationPage> {
                   const SizedBox(height: 20),
                   const Text(
                     'Lịch Đã Qua',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: primaryTextColor,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   _pastVaccinations.isEmpty
                       ? const Text(
                         'Không có lịch tiêm chủng nào đã qua.',
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(color: primaryTextColor),
                       )
                       : Column(
                         children:
@@ -240,7 +276,7 @@ class _VaccinationPageState extends State<VaccinationPage> {
               ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddEditDialog(),
-        backgroundColor: Colors.green,
+        backgroundColor: secondaryTextColor,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
@@ -248,23 +284,28 @@ class _VaccinationPageState extends State<VaccinationPage> {
 
   Widget _buildVaccinationCard(Vaccination vaccination, bool isUpcoming) {
     return Card(
-      elevation: 2,
+      color: cardBgColor,
+      elevation: 0,
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: ListTile(
         title: Text(
           vaccination.tenVaccine,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: primaryTextColor,
+          ),
         ),
         subtitle: Text(
           'Cho: ${vaccination.loaiVatNuoi}\nNgày: ${DateFormat('dd/MM/yyyy').format(vaccination.ngayTiem)}',
+          style: const TextStyle(color: primaryTextColor),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (isUpcoming)
               IconButton(
-                icon: const Icon(Icons.edit, color: Colors.blue),
+                icon: const Icon(Icons.edit, color: secondaryTextColor),
                 onPressed: () => _showAddEditDialog(vaccination: vaccination),
               ),
             IconButton(

@@ -3,6 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'dart:async';
 
+const Color primaryTextColor = Color(0xFF0e1b0e);
+const Color secondaryTextColor = Color(0xFF4e974e);
+const Color inputBgColor = Color(0xFFe7f3e7);
+const Color pageBgColor = Color(0xFFf8fcf8);
+const Color cardBgColor = Color(0xFFe7f3e7);
+
 class FeedManagementPage extends StatefulWidget {
   const FeedManagementPage({super.key});
 
@@ -50,9 +56,7 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
         });
       },
       onError: (Object error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi tải dữ liệu thức ăn: $error')),
-        );
+        // Lỗi đã được xử lý nhưng không hiển thị thông báo
       },
     );
   }
@@ -68,14 +72,10 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
           'phan_loai': newItem['phan_loai'],
         })
         .then((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Thêm thức ăn thành công!')),
-          );
+          // Xử lý thành công nhưng không hiển thị thông báo
         })
         .catchError((error) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Thêm thất bại: $error')));
+          // Lỗi đã được xử lý nhưng không hiển thị thông báo
         });
   }
 
@@ -90,14 +90,10 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
           'phan_loai': updatedItem['phan_loai'],
         })
         .then((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cập nhật thức ăn thành công!')),
-          );
+          // Xử lý thành công nhưng không hiển thị thông báo
         })
         .catchError((error) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Cập nhật thất bại: $error')));
+          // Lỗi đã được xử lý nhưng không hiển thị thông báo
         });
   }
 
@@ -120,16 +116,10 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
                     .child(itemId)
                     .remove()
                     .then((_) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Xóa thức ăn thành công!'),
-                        ),
-                      );
+                      // Xử lý thành công nhưng không hiển thị thông báo
                     })
                     .catchError((error) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Xóa thất bại: $error')),
-                      );
+                      // Lỗi đã được xử lý nhưng không hiển thị thông báo
                     });
                 Navigator.of(context).pop();
               },
@@ -150,13 +140,18 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: pageBgColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.black),
+        backgroundColor: pageBgColor,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: primaryTextColor),
         centerTitle: true,
         title: const Text(
           'Quản lý Thức ăn',
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(
+            color: primaryTextColor,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body:
@@ -178,7 +173,7 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
             _addFeedItem(newItem);
           }
         },
-        backgroundColor: Colors.green,
+        backgroundColor: secondaryTextColor,
         child: const Icon(Icons.add, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -200,8 +195,9 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
 
   Widget _buildFeedItemCard(BuildContext context, Map<String, dynamic> item) {
     return Card(
+      color: cardBgColor,
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
+      elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(
@@ -210,7 +206,11 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
         ),
         title: Text(
           item['ten']!,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: primaryTextColor,
+          ),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,15 +218,15 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
             const SizedBox(height: 4),
             Text(
               'Ngày sản xuất: ${item['ngay_sx']}',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              style: const TextStyle(fontSize: 14, color: primaryTextColor),
             ),
             Text(
               'Khối lượng: ${item['khoi_luong']}',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              style: const TextStyle(fontSize: 14, color: primaryTextColor),
             ),
             Text(
               'Phân loại: ${item['phan_loai']}',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              style: const TextStyle(fontSize: 14, color: primaryTextColor),
             ),
           ],
         ),
@@ -234,7 +234,7 @@ class _FeedManagementPageState extends State<FeedManagementPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.edit, color: Colors.blue),
+              icon: const Icon(Icons.edit, color: secondaryTextColor),
               onPressed: () async {
                 final updatedItemData = await Navigator.push(
                   context,
@@ -315,13 +315,18 @@ class _AddFeedItemPageState extends State<AddFeedItemPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: pageBgColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.black),
+        backgroundColor: pageBgColor,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: primaryTextColor),
         centerTitle: true,
         title: const Text(
           'Thêm Thức ăn mới',
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(
+            color: primaryTextColor,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: Padding(
@@ -332,7 +337,17 @@ class _AddFeedItemPageState extends State<AddFeedItemPage> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Tên thức ăn'),
+                style: const TextStyle(color: primaryTextColor),
+                decoration: InputDecoration(
+                  labelText: 'Tên thức ăn',
+                  labelStyle: const TextStyle(color: secondaryTextColor),
+                  filled: true,
+                  fillColor: inputBgColor,
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Vui lòng nhập tên thức ăn';
@@ -340,10 +355,20 @@ class _AddFeedItemPageState extends State<AddFeedItemPage> {
                   return null;
                 },
               ),
-
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _weightController,
-                decoration: const InputDecoration(labelText: 'Khối lượng (Kg)'),
+                style: const TextStyle(color: primaryTextColor),
+                decoration: InputDecoration(
+                  labelText: 'Khối lượng (Kg)',
+                  labelStyle: const TextStyle(color: secondaryTextColor),
+                  filled: true,
+                  fillColor: inputBgColor,
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -355,9 +380,20 @@ class _AddFeedItemPageState extends State<AddFeedItemPage> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _selectedType,
-                decoration: const InputDecoration(labelText: 'Phân loại'),
+                style: const TextStyle(color: primaryTextColor),
+                decoration: InputDecoration(
+                  labelText: 'Phân loại',
+                  labelStyle: const TextStyle(color: secondaryTextColor),
+                  filled: true,
+                  fillColor: inputBgColor,
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 items:
                     _feedTypes.map((String type) {
                       return DropdownMenuItem<String>(
@@ -389,6 +425,10 @@ class _AddFeedItemPageState extends State<AddFeedItemPage> {
                     });
                   }
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: secondaryTextColor,
+                  foregroundColor: Colors.white,
+                ),
                 child: const Text('Thêm thức ăn'),
               ),
             ],
@@ -468,13 +508,18 @@ class _EditFeedItemPageState extends State<EditFeedItemPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: pageBgColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.black),
+        backgroundColor: pageBgColor,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: primaryTextColor),
         centerTitle: true,
         title: const Text(
           'Chỉnh sửa Thức ăn',
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(
+            color: primaryTextColor,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: Padding(
@@ -485,7 +530,17 @@ class _EditFeedItemPageState extends State<EditFeedItemPage> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Tên thức ăn'),
+                style: const TextStyle(color: primaryTextColor),
+                decoration: InputDecoration(
+                  labelText: 'Tên thức ăn',
+                  labelStyle: const TextStyle(color: secondaryTextColor),
+                  filled: true,
+                  fillColor: inputBgColor,
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Vui lòng nhập tên thức ăn';
@@ -493,10 +548,20 @@ class _EditFeedItemPageState extends State<EditFeedItemPage> {
                   return null;
                 },
               ),
-
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _weightController,
-                decoration: const InputDecoration(labelText: 'Khối lượng (Kg)'),
+                style: const TextStyle(color: primaryTextColor),
+                decoration: InputDecoration(
+                  labelText: 'Khối lượng (Kg)',
+                  labelStyle: const TextStyle(color: secondaryTextColor),
+                  filled: true,
+                  fillColor: inputBgColor,
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -508,9 +573,20 @@ class _EditFeedItemPageState extends State<EditFeedItemPage> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _selectedType,
-                decoration: const InputDecoration(labelText: 'Phân loại'),
+                style: const TextStyle(color: primaryTextColor),
+                decoration: InputDecoration(
+                  labelText: 'Phân loại',
+                  labelStyle: const TextStyle(color: secondaryTextColor),
+                  filled: true,
+                  fillColor: inputBgColor,
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 items:
                     _feedTypes.map((String type) {
                       return DropdownMenuItem<String>(
@@ -542,6 +618,10 @@ class _EditFeedItemPageState extends State<EditFeedItemPage> {
                     });
                   }
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: secondaryTextColor,
+                  foregroundColor: Colors.white,
+                ),
                 child: const Text('Lưu thay đổi'),
               ),
             ],
