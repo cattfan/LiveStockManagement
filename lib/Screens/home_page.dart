@@ -10,10 +10,7 @@ import 'package:livestockmanagement/Screens/home_child_screens/storage_managemen
 import 'package:livestockmanagement/Screens/home_child_screens/feed_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/Barn_Page/barn_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/livestock_management/livestock_management_page.dart';
-// Dòng import cuối đã bị trùng lặp, có thể bỏ đi
-// import 'package:livestockmanagement/Screens/home_child_screens/note_page/note_page.dart';
 
-// Model đơn giản cho các công việc trong ngày
 class _TodayTask {
   final String title;
   final DateTime time;
@@ -147,8 +144,6 @@ class _HomePageState extends State<HomePage> {
         }).toList();
 
     _userRef?.child('lich_tiem_chung').get().then((snapshot) {
-      // ******** SỬA LỖI TẠI ĐÂY ********
-      // Thêm câu lệnh kiểm tra dữ liệu tồn tại trước khi sử dụng
       if (snapshot.exists && snapshot.value is Map) {
         final data = snapshot.value as Map;
         data.forEach((key, value) {
@@ -178,7 +173,6 @@ class _HomePageState extends State<HomePage> {
           }
         });
       }
-      // **********************************
 
       for (var note in todayNotes) {
         combinedTasks.add(
@@ -361,17 +355,7 @@ class _HomePageState extends State<HomePage> {
               ),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Text(
-                      'Chức năng chính',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                  ),
+                  // ******** ĐÃ XÓA DÒNG CHỮ "CHỨC NĂNG CHÍNH" TẠI ĐÂY ********
                   GridView.count(
                     crossAxisCount: 3,
                     crossAxisSpacing: 12,
