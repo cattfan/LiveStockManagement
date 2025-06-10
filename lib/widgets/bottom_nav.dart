@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/livestock_management/livestock_management_page.dart';
 import 'package:livestockmanagement/Screens/statistics_page.dart';
-import 'package:livestockmanagement/Screens/setting_page.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/setting_page/setting_page.dart';
 
 class BottomNav extends StatelessWidget {
   final int currentIndex;

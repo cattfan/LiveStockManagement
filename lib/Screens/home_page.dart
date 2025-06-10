@@ -2,7 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
-import 'package:livestockmanagement/models/note_model.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/note_page/note_model.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/note_page/note_page.dart';
 import 'package:livestockmanagement/widgets/feature_card.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/vaccination_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/storage_management_page.dart';
@@ -11,8 +12,24 @@ import 'package:livestockmanagement/Screens/home_child_screens/Barn_Page/barn_ma
 import 'package:livestockmanagement/Screens/home_child_screens/livestock_management/livestock_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/note_page/note_page.dart';
 
+// Model đơn giản cho các công việc trong ngày
+class _TodayTask {
+  final String title;
+  final DateTime time;
+  final IconData icon;
+  final Color iconColor;
+  final VoidCallback onTap;
+
+  _TodayTask({
+    required this.title,
+    required this.time,
+    required this.icon,
+    required this.iconColor,
+    required this.onTap,
+  });
+}
+
 class HomePage extends StatefulWidget {
-  // Loại bỏ hàm callback không cần thiết
   const HomePage({super.key});
 
   @override
@@ -21,10 +38,12 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _totalLivestock = 0;
-  bool _isLoading = true;
   int _noteCount = 0;
-  List<Note> _todayNotes = [];
-  String _userName = "User";
+  int _upcomingVaccinationCount = 0;
+  List<Note> _allNotes = [];
+  List<_TodayTask> _todayTasks = [];
+
+  bool _isLoading = true;
 
   DatabaseReference? _userRef;
 
@@ -37,11 +56,10 @@ class _HomePageState extends State<HomePage> {
   void _initializeUserData() {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      _userName = user.displayName ?? user.email ?? "User";
       _userRef = FirebaseDatabase.instance.ref('app_data/${user.uid}');
       _fetchTotalLivestock();
-      _fetchNoteCount();
-      _fetchTodayNotes();
+      _listenToNotes();
+      _listenToVaccinations();
     } else {
       if (mounted) {
         setState(() {
@@ -51,40 +69,143 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _fetchTodayNotes() {
-    _userRef?.child('ghi_chu').onValue.listen((DatabaseEvent event) {
+  void _listenToNotes() {
+    _userRef?.child('ghi_chu').onValue.listen((event) {
       if (!mounted) return;
-      final snapshot = event.snapshot;
       final List<Note> loadedNotes = [];
-      if (snapshot.exists && snapshot.value is Map) {
-        final notesMap = Map<String, dynamic>.from(snapshot.value as Map);
-        final today = DateTime.now();
-
+      int count = 0;
+      if (event.snapshot.exists && event.snapshot.value is Map) {
+        final notesMap = Map<String, dynamic>.from(event.snapshot.value as Map);
+        count = notesMap.length;
         notesMap.forEach((key, value) {
           final noteData = Map<String, dynamic>.from(value);
-          final reminderDateStr = noteData['reminderDate'];
-          if (reminderDateStr != null) {
-            final reminderDate = DateTime.tryParse(reminderDateStr);
-            if (reminderDate != null &&
-                reminderDate.year == today.year &&
-                reminderDate.month == today.month &&
-                reminderDate.day == today.day) {
-              loadedNotes.add(
-                Note(
-                  key: key,
-                  title: noteData['title'] ?? 'Không có tiêu đề',
-                  content: noteData['content'] ?? '',
-                  reminderDate: reminderDate,
-                ),
-              );
+          loadedNotes.add(
+            Note(
+              key: key,
+              title: noteData['title'] ?? 'Không có tiêu đề',
+              content: noteData['content'] ?? '',
+              reminderDate:
+                  noteData['reminderDate'] != null
+                      ? DateTime.tryParse(noteData['reminderDate'])
+                      : null,
+            ),
+          );
+        });
+      }
+      _allNotes = loadedNotes;
+      if (mounted) {
+        setState(() {
+          _noteCount = count;
+        });
+        _combineAndSortTodayTasks();
+      }
+    });
+  }
+
+  void _listenToVaccinations() {
+    _userRef?.child('lich_tiem_chung').onValue.listen((event) {
+      if (!mounted) return;
+      int upcomingCount = 0;
+      final now = DateTime.now();
+      // --- SỬA LỖI Ở ĐÂY ---
+      // Lấy thời điểm bắt đầu của ngày hôm nay (00:00:00)
+      final startOfToday = DateTime(now.year, now.month, now.day);
+
+      if (event.snapshot.exists && event.snapshot.value is Map) {
+        final data = event.snapshot.value as Map;
+        data.forEach((key, value) {
+          final vaccinationData = value as Map;
+          final vaccinationDateStr = vaccinationData['ngay_tiem'];
+          if (vaccinationDateStr != null) {
+            final vaccinationDate = DateTime.tryParse(vaccinationDateStr);
+            // So sánh với thời điểm bắt đầu của ngày hôm nay
+            if (vaccinationDate != null &&
+                !vaccinationDate.isBefore(startOfToday)) {
+              upcomingCount++;
             }
           }
         });
-        loadedNotes.sort((a, b) => a.reminderDate!.compareTo(b.reminderDate!));
       }
+
       if (mounted) {
         setState(() {
-          _todayNotes = loadedNotes;
+          _upcomingVaccinationCount = upcomingCount;
+        });
+        _combineAndSortTodayTasks();
+      }
+    });
+  }
+
+  void _combineAndSortTodayTasks() {
+    final List<_TodayTask> combinedTasks = [];
+    final today = DateTime.now();
+
+    // Lọc các ghi chú của hôm nay
+    final todayNotes =
+        _allNotes.where((note) {
+          if (note.reminderDate == null) return false;
+          return note.reminderDate!.year == today.year &&
+              note.reminderDate!.month == today.month &&
+              note.reminderDate!.day == today.day;
+        }).toList();
+
+    // Lọc các lịch tiêm của hôm nay
+    _userRef?.child('lich_tiem_chung').get().then((snapshot) {
+      if (snapshot.exists && snapshot.value is Map) {
+        final data = snapshot.value as Map;
+        data.forEach((key, value) {
+          final vaccinationData = value as Map;
+          final vaccinationDate = DateTime.tryParse(
+            vaccinationData['ngay_tiem'] ?? '',
+          );
+          if (vaccinationDate != null &&
+              vaccinationDate.year == today.year &&
+              vaccinationDate.month == today.month &&
+              vaccinationDate.day == today.day) {
+            combinedTasks.add(
+              _TodayTask(
+                title: vaccinationData['ten_vaccine'] ?? 'Lịch tiêm',
+                time: vaccinationDate,
+                icon: Icons.vaccines_outlined,
+                iconColor: Colors.red[400]!,
+                onTap:
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const VaccinationPage(),
+                      ),
+                    ),
+              ),
+            );
+          }
+        });
+      }
+
+      // Thêm các ghi chú đã lọc vào danh sách công việc
+      for (var note in todayNotes) {
+        combinedTasks.add(
+          _TodayTask(
+            title: note.title,
+            time: note.reminderDate!,
+            icon: Icons.receipt_long_outlined,
+            iconColor: Colors.blue[500]!,
+            onTap:
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotesListPage(),
+                  ),
+                ),
+          ),
+        );
+      }
+
+      // Sắp xếp công việc theo thời gian
+      combinedTasks.sort((a, b) => a.time.compareTo(b.time));
+
+      if (mounted) {
+        setState(() {
+          _todayTasks = combinedTasks;
         });
       }
     });
@@ -122,22 +243,6 @@ class _HomePageState extends State<HomePage> {
             }
           },
         );
-  }
-
-  void _fetchNoteCount() {
-    _userRef?.child('ghi_chu').onValue.listen((DatabaseEvent event) {
-      if (!mounted) return;
-      final snapshot = event.snapshot;
-      int count = 0;
-      if (snapshot.exists && snapshot.value is Map) {
-        count = (snapshot.value as Map).length;
-      }
-      if (mounted) {
-        setState(() {
-          _noteCount = count;
-        });
-      }
-    });
   }
 
   @override
@@ -224,13 +329,22 @@ class _HomePageState extends State<HomePage> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Xin chào, $_userName!',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey[800],
-                                ),
+                              StreamBuilder<User?>(
+                                stream: FirebaseAuth.instance.userChanges(),
+                                builder: (context, snapshot) {
+                                  final userName =
+                                      snapshot.data?.displayName ??
+                                      snapshot.data?.email ??
+                                      'User';
+                                  return Text(
+                                    'Xin chào, $userName!',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[800],
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -273,7 +387,6 @@ class _HomePageState extends State<HomePage> {
                         label: 'Quản lý Vật nuôi',
                         iconColor: const Color(0xFF34D399),
                         bgColor: const Color(0xFFD1FAE5),
-                        // *** KHÔI PHỤC LẠI NAVIGATOR.PUSH ***
                         onTap: () {
                           Navigator.push(
                             context,
@@ -371,7 +484,44 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildOverviewItem(
+    String title,
+    String value,
+    Color valueColor,
+    Color bgColor,
+  ) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              _isLoading ? '...' : value,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: valueColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFarmOverviewCard() {
+    final int notableCount = _upcomingVaccinationCount + _noteCount;
+
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -388,74 +538,29 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Tổng quan trang trại',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[700],
-                ),
-              ),
-            ],
+          Text(
+            'Tổng quan trang trại',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Colors.green[50],
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Tổng số vật nuôi',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                      ),
-                      Text(
-                        _isLoading ? '...' : _totalLivestock.toString(),
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              _buildOverviewItem(
+                'Tổng vật nuôi',
+                _totalLivestock.toString(),
+                Colors.green[700]!,
+                Colors.green[50]!,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Colors.yellow[50],
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Đáng chú ý',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                      ),
-                      Text(
-                        _isLoading ? '...' : _noteCount.toString(),
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.yellow[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              const SizedBox(width: 12),
+              _buildOverviewItem(
+                'Đáng chú ý',
+                notableCount.toString(),
+                Colors.orange[700]!,
+                Colors.orange[50]!,
               ),
             ],
           ),
@@ -492,7 +597,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          _todayNotes.isEmpty
+          _todayTasks.isEmpty
               ? Container(
                 padding: const EdgeInsets.symmetric(
                   vertical: 4.0,
@@ -506,30 +611,20 @@ class _HomePageState extends State<HomePage> {
                 ),
               )
               : ListView.separated(
-                itemCount: _todayNotes.length,
+                itemCount: _todayTasks.length,
                 shrinkWrap: true,
                 padding: EdgeInsets.zero,
                 physics: const NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
-                  final note = _todayNotes[index];
-                  final time =
-                      note.reminderDate != null
-                          ? DateFormat('HH:mm a').format(note.reminderDate!)
-                          : '';
+                  final task = _todayTasks[index];
+                  final time = DateFormat('HH:mm a').format(task.time);
                   return InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NotesListPage(),
-                        ),
-                      );
-                    },
+                    onTap: task.onTap,
                     borderRadius: BorderRadius.circular(8.0),
                     child: _buildTaskItem(
-                      Icons.receipt_long_outlined,
-                      Colors.blue[500]!,
-                      note.title,
+                      task.icon,
+                      task.iconColor,
+                      task.title,
                       time,
                     ),
                   );
