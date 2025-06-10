@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:livestockmanagement/Screens/home_child_screens/livestock_management/livestock_management_page.dart';
-import 'package:livestockmanagement/Screens/statistics_page.dart';
-import 'package:livestockmanagement/Screens/home_child_screens/setting_page/setting_page.dart';
 
 class BottomNav extends StatelessWidget {
   final int currentIndex;
@@ -36,43 +33,19 @@ class BottomNav extends StatelessWidget {
     );
   }
 
-  void _handleNavigation(BuildContext context, int index) {
-    // Không làm gì nếu đang ở trang chủ (index = 0)
-    if (index == 0) return;
-
-    Widget page;
-    switch (index) {
-      case 1:
-        page = const LivestockManagementPage();
-        break;
-      case 2:
-        page = const StatisticsPage();
-        break;
-      case 3:
-        page = const SettingsScreen();
-        break;
-      default:
-        return;
-    }
-
-    // Sử dụng Navigator.push để mở trang mới, tạo ra nút quay lại
-    Navigator.push(context, MaterialPageRoute(builder: (context) => page));
-  }
-
   Widget _buildBottomNavItem(
     BuildContext context,
     int index,
     IconData icon,
     String label,
   ) {
-    // Trang chủ luôn được active vì chúng ta đang ở HomeScreen
-    final bool isActive = (currentIndex == 0 && index == 0);
+    final bool isActive = currentIndex == index;
     final color = isActive ? Colors.green[600] : Colors.grey[600];
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => _handleNavigation(context, index),
+        onTap: () => onTap(index),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4.0),

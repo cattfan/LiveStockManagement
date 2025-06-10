@@ -20,6 +20,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController emailController;
   late final TextEditingController phoneController;
 
+  // Thêm các hằng số màu để đồng bộ
   static const Color primaryTextColor = Color(0xFF0e1b0e);
   static const Color secondaryTextColor = Color(0xFF4e974e);
   static const Color inputBgColor = Color(0xFFe7f3e7);
@@ -57,7 +58,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
     try {
       await currentUser?.updateDisplayName(nameController.text.trim());
-      // DÒNG THÔNG BÁO THÀNH CÔNG ĐÃ BỊ XÓA
       setState(() {
         isEditing = false;
       });
@@ -177,7 +177,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: primaryTextColor,
             ),
           ),
-
           ListTile(
             leading: const Icon(Icons.security, color: primaryTextColor),
             title: const Text(
@@ -204,17 +203,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // ***** THAY ĐỔI TRONG HÀM NÀY *****
   void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
       builder:
           (dialogContext) => AlertDialog(
-            title: const Text('Xác nhận đăng xuất'),
-            content: const Text('Bạn có muốn đăng xuất hay không?'),
+            backgroundColor: pageBgColor, // Nền dialog
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.0),
+            ),
+            title: const Text(
+              'Xác nhận đăng xuất',
+              style: TextStyle(color: primaryTextColor), // Màu tiêu đề
+            ),
+            content: const Text(
+              'Bạn có muốn đăng xuất hay không?',
+              style: TextStyle(color: primaryTextColor), // Màu nội dung
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('Không'),
+                child: const Text(
+                  'Không',
+                  style: TextStyle(
+                    color: secondaryTextColor,
+                  ), // Màu nút "Không"
+                ),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -231,8 +246,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     );
                   }
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Có', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      Colors.red, // Giữ màu đỏ cho hành động nguy hiểm
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
+                child: const Text('Có'),
               ),
             ],
           ),
