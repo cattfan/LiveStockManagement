@@ -20,6 +20,10 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
   late TextEditingController _humidityController;
 
   DatabaseReference? _dbRef;
+  static const Color primaryTextColor = Color(0xFF0e1b0e);
+  static const Color secondaryTextColor = Color(0xFF4e974e);
+  static const Color inputBgColor = Color(0xFFe7f3e7);
+  static const Color pageBgColor = Color(0xFFf8fcf8);
 
   @override
   void initState() {
@@ -55,9 +59,6 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
   Future<void> _saveBarn() async {
     if (_formKey.currentState!.validate()) {
       if (_dbRef == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Lỗi: Người dùng chưa đăng nhập.')),
-        );
         return;
       }
       final String tempValue =
@@ -78,28 +79,17 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
         if (widget.barn == null) {
           barnData['used'] = 0;
           await _dbRef!.push().set(barnData);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Thêm chuồng trại thành công!')),
-          );
         } else {
           await _dbRef!.child(widget.barn!.id!).update(barnData);
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Cập nhật thành công!')));
         }
         if (mounted) Navigator.of(context).pop();
       } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Đã xảy ra lỗi: $e')));
+        // Lỗi đã được xử lý nhưng không hiển thị thông báo
       }
     }
   }
 
-  // --- CHỨC NĂNG XÓA CHUỒNG TRẠI ---
   Future<void> _deleteBarn() async {
-    // *** RÀNG BUỘC ĐIỀU KIỆN: Kiểm tra xem chuồng có đang chứa vật nuôi không ***
-    // Nếu trường 'used' (số lượng đã dùng) lớn hơn 0, hiển thị cảnh báo và không cho xóa.
     if (widget.barn != null && widget.barn!.used > 0) {
       showDialog(
         context: context,
@@ -117,17 +107,13 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
               ],
             ),
       );
-      return; // Dừng hàm tại đây
-    }
-
-    if (_dbRef == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lỗi: Người dùng chưa đăng nhập.')),
-      );
       return;
     }
 
-    // Hiển thị hộp thoại xác nhận trước khi xóa
+    if (_dbRef == null) {
+      return;
+    }
+
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -150,18 +136,12 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
       },
     );
 
-    // Nếu người dùng xác nhận, tiến hành xóa
     if (confirmed == true && widget.barn != null) {
       try {
         await _dbRef!.child(widget.barn!.id!).remove();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Đã xóa chuồng trại.')));
         if (mounted) Navigator.of(context).pop();
       } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Lỗi khi xóa: $e')));
+        // Lỗi đã được xử lý nhưng không hiển thị thông báo
       }
     }
   }
@@ -169,19 +149,19 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: pageBgColor,
       appBar: AppBar(
-        leading: const BackButton(color: Colors.black),
-        backgroundColor: Colors.white,
+        leading: const BackButton(color: primaryTextColor),
+        backgroundColor: pageBgColor,
         centerTitle: true,
-        elevation: 1,
+        elevation: 0,
         title: Text(
           widget.barn == null ? 'Thêm Chuồng Trại' : 'Sửa Chuồng Trại',
           style: const TextStyle(
-            color: Colors.black,
+            color: primaryTextColor,
             fontWeight: FontWeight.bold,
           ),
         ),
-        // Hiển thị nút xóa trên AppBar nếu đang ở chế độ sửa
         actions: [
           if (widget.barn != null)
             IconButton(
@@ -198,7 +178,17 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Tên chuồng'),
+                style: const TextStyle(color: primaryTextColor),
+                decoration: InputDecoration(
+                  labelText: 'Tên chuồng',
+                  labelStyle: const TextStyle(color: secondaryTextColor),
+                  filled: true,
+                  fillColor: inputBgColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
                 validator:
                     (value) =>
                         value!.isEmpty ? 'Vui lòng nhập tên chuồng' : null,
@@ -206,15 +196,26 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _capacityController,
-                decoration: const InputDecoration(labelText: 'Sức chứa tối đa'),
+                style: const TextStyle(color: primaryTextColor),
+                decoration: InputDecoration(
+                  labelText: 'Sức chứa tối đa',
+                  labelStyle: const TextStyle(color: secondaryTextColor),
+                  filled: true,
+                  fillColor: inputBgColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value == null || value.isEmpty)
+                  if (value == null || value.isEmpty) {
                     return 'Vui lòng nhập sức chứa';
+                  }
                   final capacity = int.tryParse(value);
-                  if (capacity == null || capacity <= 0)
+                  if (capacity == null || capacity <= 0) {
                     return 'Sức chứa phải là số dương';
-                  // Ràng buộc: Sức chứa mới không được nhỏ hơn số lượng vật nuôi đang có
+                  }
                   if (widget.barn != null && capacity < widget.barn!.used) {
                     return 'Sức chứa không được nhỏ hơn số lượng hiện có (${widget.barn!.used})';
                   }
@@ -224,36 +225,53 @@ class _AddEditBarnPageState extends State<AddEditBarnPage> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _tempController,
+                style: const TextStyle(color: primaryTextColor),
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Nhiệt độ',
                   suffixText: '°C',
+                  labelStyle: const TextStyle(color: secondaryTextColor),
+                  filled: true,
+                  fillColor: inputBgColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _humidityController,
+                style: const TextStyle(color: primaryTextColor),
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Độ ẩm',
                   suffixText: '%',
+                  labelStyle: const TextStyle(color: secondaryTextColor),
+                  filled: true,
+                  fillColor: inputBgColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _saveBarn,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: secondaryTextColor,
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
                 ),
-                child: const Text(
-                  'Lưu',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
+                child: const Text('Lưu', style: TextStyle(fontSize: 16)),
               ),
             ],
           ),

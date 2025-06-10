@@ -2,8 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class StatisticsPage extends StatefulWidget {
   const StatisticsPage({super.key});
@@ -119,9 +117,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
           _isLoading = false;
         });
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Lỗi tải thống kê: $e")));
     }
   }
 
@@ -136,12 +131,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F5EE),
       appBar: AppBar(
-        // XÓA: Dòng `automaticallyImplyLeading: false` đã bị xóa.
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text('Thống kê', style: TextStyle(color: Colors.black)),
         centerTitle: true,
-        // THÊM: Đảm bảo nút quay lại tự động có màu đen
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
@@ -224,7 +217,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
   }
 }
 
-// Add this widget below your StatisticsPage class or in a separate file and import it.
 class MyCustomListItem extends StatelessWidget {
   final String? svgIconString;
   final IconData? iconData;

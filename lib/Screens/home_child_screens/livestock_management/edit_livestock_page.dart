@@ -24,7 +24,7 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
   late TextEditingController _tenController;
   late TextEditingController _soLuongController;
 
-  String? _selectedType; // State cho loại vật nuôi
+  String? _selectedType;
   String? _selectedBarnId;
   String? _selectedFeedId;
   String? _oldBarnId;
@@ -42,6 +42,11 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
   List<Barn> _barnList = [];
   List<Feed> _feedList = [];
   bool _isLoading = true;
+
+  static const Color primaryTextColor = Color(0xFF0e1b0e);
+  static const Color secondaryTextColor = Color(0xFF4e974e);
+  static const Color inputBgColor = Color(0xFFe7f3e7);
+  static const Color pageBgColor = Color(0xFFf8fcf8);
 
   @override
   void initState() {
@@ -147,16 +152,13 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
   Future<void> _saveLivestock() async {
     if (_formKey.currentState!.validate()) {
       if (_livestockRef == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Người dùng chưa đăng nhập.')),
-        );
         return;
       }
       final int newSoLuong = int.tryParse(_soLuongController.text) ?? 0;
 
       final newLivestockData = {
         'ten': _tenController.text,
-        'loai': _selectedType, // Lưu loại
+        'loai': _selectedType,
         'chuong': _selectedBarnId,
         'soLuong': newSoLuong,
         'thucAn': _selectedFeedId,
@@ -166,9 +168,6 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
         if (widget.livestock == null) {
           await _livestockRef!.push().set(newLivestockData);
           await _updateBarnUsage(_selectedBarnId!, newSoLuong);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Thêm vật nuôi thành công!')),
-          );
         } else {
           await _livestockRef!
               .child(widget.livestock!.id!)
@@ -177,19 +176,15 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
             int change = newSoLuong - _oldSoLuong;
             if (change != 0) await _updateBarnUsage(_selectedBarnId!, change);
           } else {
-            if (_oldBarnId != null)
+            if (_oldBarnId != null) {
               await _updateBarnUsage(_oldBarnId!, -_oldSoLuong);
+            }
             await _updateBarnUsage(_selectedBarnId!, newSoLuong);
           }
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Cập nhật thành công!')));
         }
         if (mounted) Navigator.of(context).pop();
       } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Đã xảy ra lỗi: $e')));
+        // Lỗi đã được xử lý nhưng không hiển thị thông báo
       }
     }
   }
@@ -222,30 +217,39 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
           widget.livestock!.chuong,
           -widget.livestock!.soLuong,
         );
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Đã xóa vật nuôi.')));
         if (mounted) Navigator.of(context).pop();
       } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Lỗi khi xóa: $e')));
+        // Lỗi đã được xử lý nhưng không hiển thị thông báo
       }
     }
+  }
+
+  InputDecoration _buildDropdownDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: secondaryTextColor),
+      filled: true,
+      fillColor: inputBgColor,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.0),
+        borderSide: BorderSide.none,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: pageBgColor,
       appBar: AppBar(
-        leading: const BackButton(color: Colors.black),
-        backgroundColor: Colors.white,
+        leading: const BackButton(color: primaryTextColor),
+        backgroundColor: pageBgColor,
         centerTitle: true,
-        elevation: 1,
+        elevation: 0,
         title: Text(
           widget.livestock == null ? 'Thêm Vật Nuôi' : 'Sửa Vật Nuôi',
           style: const TextStyle(
-            color: Colors.black,
+            color: primaryTextColor,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -268,8 +272,9 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
                     children: [
                       TextFormField(
                         controller: _tenController,
-                        decoration: const InputDecoration(
-                          labelText: 'Tên/Giống (VD: Bò sữa)',
+                        style: const TextStyle(color: primaryTextColor),
+                        decoration: _buildDropdownDecoration(
+                          'Tên/Giống (VD: Bò sữa)',
                         ),
                         validator:
                             (value) =>
@@ -278,10 +283,13 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
                                     : null,
                       ),
                       const SizedBox(height: 16),
-                      // --- THÊM MỚI: Dropdown cho Loại ---
                       DropdownButtonFormField<String>(
                         value: _selectedType,
-                        decoration: const InputDecoration(labelText: 'Loại'),
+                        style: const TextStyle(
+                          color: primaryTextColor,
+                          fontSize: 16,
+                        ),
+                        decoration: _buildDropdownDecoration('Loại'),
                         items:
                             _livestockTypes.map((String type) {
                               return DropdownMenuItem<String>(
@@ -302,7 +310,11 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
                       DropdownButtonFormField<String>(
                         value: _selectedBarnId,
                         isExpanded: true,
-                        decoration: const InputDecoration(labelText: 'Chuồng'),
+                        style: const TextStyle(
+                          color: primaryTextColor,
+                          fontSize: 16,
+                        ),
+                        decoration: _buildDropdownDecoration('Chuồng'),
                         items:
                             _barnList.map((Barn barn) {
                               return DropdownMenuItem<String>(
@@ -325,16 +337,17 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _soLuongController,
-                        decoration: const InputDecoration(
-                          labelText: 'Số lượng',
-                        ),
+                        style: const TextStyle(color: primaryTextColor),
+                        decoration: _buildDropdownDecoration('Số lượng'),
                         keyboardType: TextInputType.number,
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.isEmpty) {
                             return 'Vui lòng nhập số lượng';
+                          }
                           final newQuantity = int.tryParse(value);
-                          if (newQuantity == null || newQuantity <= 0)
+                          if (newQuantity == null || newQuantity <= 0) {
                             return 'Vui lòng nhập số dương';
+                          }
 
                           if (_selectedBarnId != null) {
                             Barn? selectedBarn;
@@ -366,7 +379,11 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
                       DropdownButtonFormField<String>(
                         value: _selectedFeedId,
                         isExpanded: true,
-                        decoration: const InputDecoration(labelText: 'Thức ăn'),
+                        style: const TextStyle(
+                          color: primaryTextColor,
+                          fontSize: 16,
+                        ),
+                        decoration: _buildDropdownDecoration('Thức ăn'),
                         items:
                             _feedList.map((Feed feed) {
                               return DropdownMenuItem<String>(
@@ -390,12 +407,16 @@ class _AddEditLivestockPageState extends State<AddEditLivestockPage> {
                       ElevatedButton(
                         onPressed: _saveLivestock,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
+                          backgroundColor: secondaryTextColor,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
                         ),
                         child: const Text(
                           'Lưu',
-                          style: TextStyle(color: Colors.white, fontSize: 16),
+                          style: TextStyle(fontSize: 16),
                         ),
                       ),
                     ],
