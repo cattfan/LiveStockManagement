@@ -10,7 +10,8 @@ import 'package:livestockmanagement/Screens/home_child_screens/storage_managemen
 import 'package:livestockmanagement/Screens/home_child_screens/feed_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/Barn_Page/barn_management_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/livestock_management/livestock_management_page.dart';
-import 'package:livestockmanagement/Screens/home_child_screens/note_page/note_page.dart';
+// Dòng import cuối đã bị trùng lặp, có thể bỏ đi
+// import 'package:livestockmanagement/Screens/home_child_screens/note_page/note_page.dart';
 
 // Model đơn giản cho các công việc trong ngày
 class _TodayTask {
@@ -107,8 +108,6 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       int upcomingCount = 0;
       final now = DateTime.now();
-      // --- SỬA LỖI Ở ĐÂY ---
-      // Lấy thời điểm bắt đầu của ngày hôm nay (00:00:00)
       final startOfToday = DateTime(now.year, now.month, now.day);
 
       if (event.snapshot.exists && event.snapshot.value is Map) {
@@ -118,7 +117,6 @@ class _HomePageState extends State<HomePage> {
           final vaccinationDateStr = vaccinationData['ngay_tiem'];
           if (vaccinationDateStr != null) {
             final vaccinationDate = DateTime.tryParse(vaccinationDateStr);
-            // So sánh với thời điểm bắt đầu của ngày hôm nay
             if (vaccinationDate != null &&
                 !vaccinationDate.isBefore(startOfToday)) {
               upcomingCount++;
@@ -140,7 +138,6 @@ class _HomePageState extends State<HomePage> {
     final List<_TodayTask> combinedTasks = [];
     final today = DateTime.now();
 
-    // Lọc các ghi chú của hôm nay
     final todayNotes =
         _allNotes.where((note) {
           if (note.reminderDate == null) return false;
@@ -149,8 +146,9 @@ class _HomePageState extends State<HomePage> {
               note.reminderDate!.day == today.day;
         }).toList();
 
-    // Lọc các lịch tiêm của hôm nay
     _userRef?.child('lich_tiem_chung').get().then((snapshot) {
+      // ******** SỬA LỖI TẠI ĐÂY ********
+      // Thêm câu lệnh kiểm tra dữ liệu tồn tại trước khi sử dụng
       if (snapshot.exists && snapshot.value is Map) {
         final data = snapshot.value as Map;
         data.forEach((key, value) {
@@ -180,8 +178,8 @@ class _HomePageState extends State<HomePage> {
           }
         });
       }
+      // **********************************
 
-      // Thêm các ghi chú đã lọc vào danh sách công việc
       for (var note in todayNotes) {
         combinedTasks.add(
           _TodayTask(
@@ -200,7 +198,6 @@ class _HomePageState extends State<HomePage> {
         );
       }
 
-      // Sắp xếp công việc theo thời gian
       combinedTasks.sort((a, b) => a.time.compareTo(b.time));
 
       if (mounted) {

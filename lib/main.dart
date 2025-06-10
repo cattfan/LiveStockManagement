@@ -62,7 +62,7 @@ class AuthWrapper extends StatelessWidget {
               (user.displayName == null || user.displayName!.isEmpty)) {
             return const GetUsernamePage();
           }
-          return HomeScreen();
+          return const HomeScreen();
         }
         return const LivestockLoginPage();
       },
@@ -78,17 +78,30 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0;
+
+  // Danh sách các trang tương ứng với BottomNav
+  final List<Widget> _pages = [
+    const HomePage(),
+    const LivestockManagementPage(),
+    const StatisticsPage(),
+    const SettingsScreen(),
+  ];
+
+  void _onTabTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Body chỉ là HomePage
-      body: HomePage(),
-      // BottomNav sẽ xử lý việc điều hướng
+      // Thay đổi body để hiển thị trang được chọn
+      body: _pages[_currentIndex],
       bottomNavigationBar: BottomNav(
-        currentIndex: 0, // Luôn ở tab Trang chủ
-        onTap: (index) {
-          // Logic điều hướng sẽ được xử lý trong BottomNav
-        },
+        currentIndex: _currentIndex,
+        onTap: _onTabTapped, // Truyền hàm callback vào BottomNav
       ),
     );
   }
