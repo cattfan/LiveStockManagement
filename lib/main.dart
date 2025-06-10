@@ -4,7 +4,7 @@ import 'package:livestockmanagement/Screens/home_child_screens/livestock_managem
 import 'package:livestockmanagement/Screens/statistics_page.dart';
 import 'package:livestockmanagement/widgets/bottom_nav.dart';
 import 'package:livestockmanagement/Screens/home_page.dart';
-import 'package:livestockmanagement/Screens/setting_page.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/setting_page/setting_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/auth_page/login_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/auth_page/getusername.dart';
 
@@ -49,7 +49,7 @@ class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
+      stream: FirebaseAuth.instance.userChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -62,7 +62,7 @@ class AuthWrapper extends StatelessWidget {
               (user.displayName == null || user.displayName!.isEmpty)) {
             return const GetUsernamePage();
           }
-          return const HomeScreen();
+          return HomeScreen();
         }
         return const LivestockLoginPage();
       },
@@ -82,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       // Body chỉ là HomePage
-      body: const HomePage(),
+      body: HomePage(),
       // BottomNav sẽ xử lý việc điều hướng
       bottomNavigationBar: BottomNav(
         currentIndex: 0, // Luôn ở tab Trang chủ

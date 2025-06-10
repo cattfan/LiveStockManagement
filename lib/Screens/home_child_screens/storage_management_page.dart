@@ -26,7 +26,9 @@ class _StorageManagementPageState extends State<StorageManagementPage> {
   String? _selectedUnit;
   String? _selectedType;
 
-  final List<String> _storageTypes = ['Thuốc', 'Dụng cụ', 'Vật tư khác'];
+  // --- THAY ĐỔI Ở ĐÂY ---
+  // Đã xóa "Vật tư khác" khỏi danh sách
+  final List<String> _storageTypes = ['Thuốc', 'Dụng cụ'];
 
   final List<String> _units = [
     'Kg',

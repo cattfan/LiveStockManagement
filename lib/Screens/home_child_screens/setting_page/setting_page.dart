@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:livestockmanagement/Screens/home_child_screens/setting_page/change_password_page.dart';
 import 'package:livestockmanagement/Screens/home_child_screens/auth_page/login_page.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -10,7 +11,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool isDarkMode = false;
   bool isNotificationEnabled = true;
   bool isEditing = false;
 
@@ -57,11 +57,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
     try {
       await currentUser?.updateDisplayName(nameController.text.trim());
+      // DÒNG THÔNG BÁO THÀNH CÔNG ĐÃ BỊ XÓA
       setState(() {
         isEditing = false;
       });
     } catch (e) {
-      // Lỗi đã được xử lý nhưng không hiển thị thông báo
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Lỗi khi cập nhật: $e')));
     }
   }
 
@@ -174,26 +177,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: primaryTextColor,
             ),
           ),
-          SwitchListTile(
-            title: const Text(
-              'Thông báo',
-              style: TextStyle(color: primaryTextColor),
-            ),
-            value: isNotificationEnabled,
-            activeColor: secondaryTextColor,
-            onChanged: (val) {
-              setState(() {
-                isNotificationEnabled = val;
-              });
-            },
-          ),
+
           ListTile(
             leading: const Icon(Icons.security, color: primaryTextColor),
             title: const Text(
               'Đổi mật khẩu',
               style: TextStyle(color: primaryTextColor),
             ),
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ChangePasswordPage(),
+                ),
+              );
+            },
           ),
           const Divider(),
           ListTile(
