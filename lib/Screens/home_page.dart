@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
 import 'package:livestockmanagement/models/note_model.dart';
@@ -51,26 +50,6 @@ class _HomePageState extends State<HomePage> {
       }
     }
   }
-
-  // Hàm lấy tên người dùng từ Firebase Realtime Database
-  Future<void> _fetchUserName() async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return;
-
-  final userRef = FirebaseDatabase.instance.ref('users/${user.uid}');
-  try {
-    final snapshot = await userRef.get();
-    if (snapshot.exists) {
-      final data = snapshot.value as Map<dynamic, dynamic>;
-      setState(() {
-        _userName = data['name'] ?? '';
-      });
-    }
-  } catch (e) {
-    debugPrint('Lỗi khi lấy tên người dùng: $e');
-  }
-}
-
 
   void _fetchTodayNotes() {
     _userRef?.child('ghi_chu').onValue.listen((DatabaseEvent event) {
@@ -356,13 +335,14 @@ class _HomePageState extends State<HomePage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const StorageManagementPage(),
+                              builder:
+                                  (context) => const StorageManagementPage(),
                             ),
                           );
                         },
                       ),
                       FeatureCard(
-                        icon: Icons.note_alt_outlined,
+                        icon: Icons.receipt_long_outlined,
                         label: 'Ghi chú',
                         iconColor: const Color(0xFF34D399),
                         bgColor: const Color(0xFFD1FAE5),
@@ -377,10 +357,11 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  _buildStatisticsSection(),
                   const SizedBox(height: 24),
-                  _buildNoteRemindersSection(),
+                  _buildFarmOverviewCard(),
+                  const SizedBox(height: 24),
+                  _buildTodayTasksCard(),
+                  const SizedBox(height: 80),
                 ]),
               ),
             ),
@@ -390,26 +371,38 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildStatisticsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Thống kê',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[700],
+  Widget _buildFarmOverviewCard() {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.07),
+            spreadRadius: 0,
+            blurRadius: 10,
           ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            color: Colors.green[50],
-            borderRadius: BorderRadius.circular(12.0),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Tổng quan trang trại',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
+              ),
+            ],
           ),
-          child: Row(
+          const SizedBox(height: 12),
+          Row(
             children: [
               Expanded(
                 child: Container(
@@ -449,7 +442,7 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Tổng số ghi chú',
+                        'Đáng chú ý',
                         style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                       ),
                       Text(
@@ -466,45 +459,122 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildNoteRemindersSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Lời nhắc hôm nay',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[700],
+  Widget _buildTodayTasksCard() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.07),
+            spreadRadius: 0,
+            blurRadius: 10,
           ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          constraints: BoxConstraints(maxHeight: 320),
-          child: _todayNotes.isEmpty
-              ? const Center(
-                  child: Text('Không có lời nhắc nào hôm nay.'),
-                )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _todayNotes.length,
-                  itemBuilder: (context, index) {
-                    final note = _todayNotes[index];
-                    final formattedDate = DateFormat('HH:mm').format(note.reminderDate!);
-                    return ListTile(
-                      leading: const Icon(Icons.notification_add_outlined),
-                      title: Text(note.title),
-                      subtitle: Text(formattedDate),
-                    );
-                  },
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20.0),
+            child: Text(
+              'Công việc hôm nay',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+            ),
+          ),
+          _todayNotes.isEmpty
+              ? Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 4.0,
+                  horizontal: 8.0,
                 ),
-        ),
-      ],
+                child: Center(
+                  child: Text(
+                    'Không có công việc nào cho hôm nay.',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                  ),
+                ),
+              )
+              : ListView.separated(
+                itemCount: _todayNotes.length,
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final note = _todayNotes[index];
+                  final time =
+                      note.reminderDate != null
+                          ? DateFormat('HH:mm a').format(note.reminderDate!)
+                          : '';
+                  return InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NotesListPage(),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: _buildTaskItem(
+                      Icons.receipt_long_outlined,
+                      Colors.blue[500]!,
+                      note.title,
+                      time,
+                    ),
+                  );
+                },
+                separatorBuilder: (context, index) => const SizedBox(height: 4),
+              ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTaskItem(
+    IconData icon,
+    Color iconColor,
+    String title,
+    String time,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Icon(icon, color: iconColor, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(time, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+        ],
+      ),
     );
   }
 }
