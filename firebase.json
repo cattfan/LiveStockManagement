@@ -1,1 +1,33 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"live-stock-management-6a11a","appId":"1:889972463280:android:9be2d38d70fbb49bfc8d75","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"live-stock-management-6a11a","configurations":{"android":"1:889972463280:android:9be2d38d70fbb49bfc8d75","ios":"1:889972463280:ios:c26560795d8786edfc8d75","macos":"1:889972463280:ios:c26560795d8786edfc8d75","web":"1:889972463280:web:33478a4f4d8d928cfc8d75","windows":"1:889972463280:web:12d0217d0a27a94efc8d75"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "live-stock-management-6a11a",
+          "appId": "1:889972463280:android:9be2d38d70fbb49bfc8d75",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "live-stock-management-6a11a",
+          "configurations": {
+            "android": "1:889972463280:android:9be2d38d70fbb49bfc8d75",
+            "ios": "1:889972463280:ios:c26560795d8786edfc8d75",
+            "macos": "1:889972463280:ios:c26560795d8786edfc8d75",
+            "web": "1:889972463280:web:33478a4f4d8d928cfc8d75",
+            "windows": "1:889972463280:web:12d0217d0a27a94efc8d75"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}
