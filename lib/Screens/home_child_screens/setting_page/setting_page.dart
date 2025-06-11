@@ -203,61 +203,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ***** THAY ĐỔI TRONG HÀM NÀY *****
+  // ***** THAY ĐỔI QUAN TRỌNG NẰM Ở HÀM NÀY *****
   void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
       builder:
           (dialogContext) => AlertDialog(
-            backgroundColor: pageBgColor, // Nền dialog
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.0),
+        backgroundColor: pageBgColor, // Nền dialog
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        title: const Text(
+          'Xác nhận đăng xuất',
+          style: TextStyle(color: primaryTextColor), // Màu tiêu đề
+        ),
+        content: const Text(
+          'Bạn có muốn đăng xuất hay không?',
+          style: TextStyle(color: primaryTextColor), // Màu nội dung
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text(
+              'Không',
+              style: TextStyle(
+                color: secondaryTextColor,
+              ), // Màu nút "Không"
             ),
-            title: const Text(
-              'Xác nhận đăng xuất',
-              style: TextStyle(color: primaryTextColor), // Màu tiêu đề
-            ),
-            content: const Text(
-              'Bạn có muốn đăng xuất hay không?',
-              style: TextStyle(color: primaryTextColor), // Màu nội dung
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text(
-                  'Không',
-                  style: TextStyle(
-                    color: secondaryTextColor,
-                  ), // Màu nút "Không"
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final pageContext = context;
-                  Navigator.pop(dialogContext);
-                  await _signOut();
-
-                  if (mounted) {
-                    Navigator.of(pageContext).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) => const LivestockLoginPage(),
-                      ),
-                      (Route<dynamic> route) => false,
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      Colors.red, // Giữ màu đỏ cho hành động nguy hiểm
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                ),
-                child: const Text('Có'),
-              ),
-            ],
           ),
+          ElevatedButton(
+            // ***** BẮT ĐẦU THAY ĐỔI *****
+            onPressed: () async {
+              Navigator.pop(dialogContext); // Đóng hộp thoại
+              await _signOut(); // Gọi hàm đăng xuất
+              // KHÔNG cần điều hướng thủ công ở đây.
+              // AuthWrapper trong main.dart sẽ tự động làm điều đó.
+            },
+            // ***** KẾT THÚC THAY ĐỔI *****
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+              Colors.red, // Giữ màu đỏ cho hành động nguy hiểm
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+            ),
+            child: const Text('Có'),
+          ),
+        ],
+      ),
     );
   }
 }
